@@ -7,7 +7,7 @@ public class Main {
   public static void main(String[] args){
     if (args.length < 2) {
       System.out.println("Missing <database path> and <command>");
-      return;
+      System.exit(1);
     }
 
     String databaseFilePath = args[0];
@@ -27,8 +27,7 @@ public class Main {
           // You can use print statements as follows for debugging, they'll be visible when running tests.
           System.err.println("Logs from your program will appear here!");
 
-          // TODO: Uncomment the code below to pass the first stage
-          // System.out.println("database page size: " + pageSize);
+           System.out.println("database page size: " + pageSize);
         } catch (IOException e) {
           System.out.println("Error reading file: " + e.getMessage());
         }
