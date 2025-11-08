@@ -23,11 +23,17 @@ public class Main {
           databaseFile.read(pageSizeBytes);
           short pageSizeSigned = ByteBuffer.wrap(pageSizeBytes).getShort();
           int pageSize = Short.toUnsignedInt(pageSizeSigned);
+          databaseFile.skip(100 - 18 + 3);
+
+          byte[] numberOfTablesBytes = new byte[2];
+          databaseFile.read(numberOfTablesBytes);
+          short numberOfTables = ByteBuffer.wrap(numberOfTablesBytes).getShort();
 
           // You can use print statements as follows for debugging, they'll be visible when running tests.
           System.err.println("Logs from your program will appear here!");
 
            System.out.println("database page size: " + pageSize);
+           System.out.println("number of tables: " + numberOfTables);
         } catch (IOException e) {
           System.out.println("Error reading file: " + e.getMessage());
         }
