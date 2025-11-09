@@ -1,7 +1,8 @@
+package executors;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 public class Utils {
   public static String getLastTableNameFromFile(FileInputStream fileInputStream)
