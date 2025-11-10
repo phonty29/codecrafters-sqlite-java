@@ -6,6 +6,7 @@ import exceptions.IncorrectBTreePageType;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -14,48 +15,33 @@ public class TableExecutor implements Executor {
   @Override
   public void execute(String filePath) {
     try (FileInputStream databaseFile = new FileInputStream(filePath)) {
-      // Skip the first 100 bytes = Database File Header
-      int databaseFileHeaderLength = 100;
-      databaseFile.skip(databaseFileHeaderLength);
-      // Skip B-tree page type and freeblocks
-      // B-tree page type:
-      byte bTreePageType = (byte) databaseFile.read();
-      validateBTreePageType(bTreePageType);
-
-      // Skip freeblocks
-      int freeblocksLength = 2;
-      databaseFile.skip(freeblocksLength);
-
+      FileChannel channel = databaseFile.getChannel();
+      channel.position(16);
+      // Obtain page size
+      ByteBuffer pageSizeBuffer = ByteBuffer.allocate(2);
+      channel.read(pageSizeBuffer);
+      int pageSize = Short.toUnsignedInt(pageSizeBuffer.duplicate().clear().getShort());
+      // Copy first page to buffer
+      ByteBuffer pageBuffer = ByteBuffer.allocate(pageSize);
+      channel.position(0).read(pageBuffer);
       // Get number of cells in sqlite_schema
-      int numberOfTablesLength = 2;
-      byte[] numberOfTablesBytes = new byte[numberOfTablesLength];
-      databaseFile.read(numberOfTablesBytes);
-      short numberOfTables = ByteBuffer.wrap(numberOfTablesBytes).getShort();
+      short numberOfTables = pageBuffer.position(103).getShort();
+
       // Skip till cell pointer array
       int cellHeaderTailLength = 3;
-      databaseFile.skip(cellHeaderTailLength);
+      pageBuffer.position(pageBuffer.position() + cellHeaderTailLength);
+      // Slice Cell Pointer Array as buffer
+      ByteBuffer cellPointerArrayBuffer = pageBuffer.slice(pageBuffer.position(), 2*numberOfTables);
 
-      byte[] cellPointerArrayBytes = new byte[2*numberOfTables];
-      databaseFile.read(cellPointerArrayBytes);
-
-      ByteBuffer cellPointerArray = ByteBuffer.wrap(cellPointerArrayBytes);
-      short[] tableOffsets = new short[numberOfTables];
+      String[] tableNames = new String[numberOfTables];
       for (int i = 0; i < numberOfTables; i++) {
         // The last table offset goes first, so printing order from last-to-first
-        tableOffsets[i] = cellPointerArray.getShort();
+
       }
 
-      int lastTableOffset = tableOffsets[0];
-      int firstTableOffset = tableOffsets[numberOfTables-1];
-      int tableDataSize = lastTableOffset - firstTableOffset;
-      int skipToFirstOffset = firstTableOffset - (108 + (2*numberOfTables));
-      databaseFile.skip(skipToFirstOffset);
 
-      byte[] tableData = new byte[tableDataSize];
-      databaseFile.read(tableData);
-
-      String[] tableNames = Utils.getTableNamesFromRecords(tableData, tableOffsets.length);
-      tableNames[tableNames.length-1] = Utils.getLastTableNameFromFile(databaseFile);
+//      String[] tableNames = Utils.getTableNamesFromRecords(tableData, tableOffsets.length);
+//      tableNames[tableNames.length-1] = Utils.getLastTableNameFromFile(databaseFile);
 
       Collections.reverse(Arrays.asList(tableNames));
 

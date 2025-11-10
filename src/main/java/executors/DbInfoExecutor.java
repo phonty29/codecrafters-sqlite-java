@@ -16,12 +16,12 @@ public class DbInfoExecutor implements Executor {
       ByteBuffer pageSizeBuffer = ByteBuffer.allocate(2);
       channel.read(pageSizeBuffer);
       int pageSize = Short.toUnsignedInt(pageSizeBuffer.duplicate().clear().getShort());
-
+      // Copy first page to buffer
       ByteBuffer pageBuffer = ByteBuffer.allocate(pageSize);
       channel.position(0).read(pageBuffer);
-
       // Get number of cells in sqlite_schema
       short numberOfTables = pageBuffer.position(103).getShort();
+
       // Print results
       System.out.println("database page size: " + pageSize);
       System.out.println("number of tables: " + numberOfTables);
