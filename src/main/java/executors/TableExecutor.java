@@ -51,7 +51,6 @@ public class TableExecutor implements Executor {
       int skipToFirstOffset = firstTableOffset - (108 + (2*numberOfTables));
       databaseFile.skip(skipToFirstOffset);
 
-      databaseFile.getChannel();
       byte[] tableData = new byte[tableDataSize];
       databaseFile.read(tableData);
 

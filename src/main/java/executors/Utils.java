@@ -8,9 +8,6 @@ import java.nio.ByteBuffer;
 public class Utils {
   public static String getLastTableNameFromFile(FileInputStream fileInputStream)
       throws IOException {
-    while (fileInputStream.available() > 0) {
-
-    }
     int payloadSize = fileInputStream.read();
     // Skip rowid
     fileInputStream.read();
