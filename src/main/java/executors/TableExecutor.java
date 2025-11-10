@@ -1,5 +1,8 @@
 package executors;
 
+import static executors.Utils.validateBTreePageType;
+
+import exceptions.IncorrectBTreePageType;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,12 +14,27 @@ public class TableExecutor implements Executor {
   @Override
   public void execute(String filePath) {
     try (FileInputStream databaseFile = new FileInputStream(filePath)) {
-      databaseFile.skip(103); // Skip the first 16 bytes of the header
-      byte[] numberOfTablesBytes = new byte[2];
+      // Skip the first 100 bytes = Database File Header
+      int databaseFileHeaderLength = 100;
+      databaseFile.skip(databaseFileHeaderLength);
+      // Skip B-tree page type and freeblocks
+      // B-tree page type:
+      byte bTreePageType = (byte) databaseFile.read();
+      validateBTreePageType(bTreePageType);
+
+      // Skip freeblocks
+      int freeblocksLength = 2;
+      databaseFile.skip(freeblocksLength);
+
+      // Get number of cells in sqlite_schema
+      int numberOfTablesLength = 2;
+      byte[] numberOfTablesBytes = new byte[numberOfTablesLength];
       databaseFile.read(numberOfTablesBytes);
       short numberOfTables = ByteBuffer.wrap(numberOfTablesBytes).getShort();
-      // Skip until cell pointer array
-      databaseFile.skip(3);
+      // Skip till cell pointer array
+      int cellHeaderTailLength = 3;
+      databaseFile.skip(cellHeaderTailLength);
+
       byte[] cellPointerArrayBytes = new byte[2*numberOfTables];
       databaseFile.read(cellPointerArrayBytes);
 
@@ -33,6 +51,7 @@ public class TableExecutor implements Executor {
       int skipToFirstOffset = firstTableOffset - (108 + (2*numberOfTables));
       databaseFile.skip(skipToFirstOffset);
 
+      databaseFile.getChannel();
       byte[] tableData = new byte[tableDataSize];
       databaseFile.read(tableData);
 

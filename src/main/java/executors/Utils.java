@@ -1,5 +1,6 @@
 package executors;
 
+import exceptions.IncorrectBTreePageType;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -7,6 +8,9 @@ import java.nio.ByteBuffer;
 public class Utils {
   public static String getLastTableNameFromFile(FileInputStream fileInputStream)
       throws IOException {
+    while (fileInputStream.available() > 0) {
+
+    }
     int payloadSize = fileInputStream.read();
     // Skip rowid
     fileInputStream.read();
@@ -88,5 +92,11 @@ public class Utils {
 
   private static boolean isOddAndBiggerThan13(int b) {
     return b > 13 && (b%2 == 0);
+  }
+
+  public static void validateBTreePageType(byte type) throws IncorrectBTreePageType {
+    if (type != 0x02 && type != 0x05 && type != 0x0a && type != 0x0d) {
+      throw new IncorrectBTreePageType(type);
+    }
   }
 }
