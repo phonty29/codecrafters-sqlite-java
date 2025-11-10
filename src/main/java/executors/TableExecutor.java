@@ -1,5 +1,6 @@
 package executors;
 
+import static executors.Utils.getSize;
 import static executors.Utils.validateBTreePageType;
 
 import exceptions.IncorrectBTreePageType;
@@ -34,20 +35,46 @@ public class TableExecutor implements Executor {
       ByteBuffer cellPointerArrayBuffer = pageBuffer.slice(pageBuffer.position(), 2*numberOfTables);
 
       String[] tableNames = new String[numberOfTables];
+      short[] offsets = new short[numberOfTables];
       for (int i = 0; i < numberOfTables; i++) {
         // The last table offset goes first, so printing order from last-to-first
-
+        offsets[i] = cellPointerArrayBuffer.getShort();
+        if (i == 0) {
+          tableNames[i] = getTableNameFromRecord(pageBuffer.position(offsets[i]).slice());
+        } else {
+          tableNames[i] = getTableNameFromRecord(pageBuffer.slice(offsets[i], offsets[i-1] - offsets[i]));
+        }
       }
-
-
-//      String[] tableNames = Utils.getTableNamesFromRecords(tableData, tableOffsets.length);
-//      tableNames[tableNames.length-1] = Utils.getLastTableNameFromFile(databaseFile);
-
-      Collections.reverse(Arrays.asList(tableNames));
 
       System.out.println(String.join(" ", tableNames));
     } catch (IOException e) {
       System.out.println("Error reading file: " + e.getMessage());
     }
+  }
+
+  private String getTableNameFromRecord(ByteBuffer recordBuffer) {
+    System.out.println("RecordBuffer capacity: " + recordBuffer.capacity());
+    System.out.println("RecordBuffer limit: " + recordBuffer.limit());
+    byte payloadSize = recordBuffer.get();
+    // Skip rowid
+    recordBuffer.get();
+    // Payload starts here
+    byte payloadHeaderSize = recordBuffer.get();
+    byte typeSize = getSize(recordBuffer.get());
+    byte nameSize = getSize(recordBuffer.get());
+    byte tableNameSize = getSize(recordBuffer.get());
+    // Skip rest record header
+    recordBuffer.get(new byte[payloadHeaderSize - 4]);
+    // Record body starts here
+    // Skip sqlite_schema.type from body
+    byte[] typeBytes = new byte[typeSize];
+    recordBuffer.get(typeBytes);
+    // Skip sqlite_schema.name
+    byte[] nameBytes = new byte[nameSize];
+    recordBuffer.get(nameBytes);
+    // Get table name sqlite_schema.tbl_name
+    byte[] tableNameBytes = new byte[tableNameSize];
+    recordBuffer.get(tableNameBytes);
+    return new String(tableNameBytes);
   }
 }

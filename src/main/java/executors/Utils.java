@@ -31,43 +31,8 @@ public class Utils {
     return new String(tableNameBytes);
   }
 
-  public static String[] getTableNamesFromRecords(byte[] records, int length) {
-    String[] tableNames = new String[length];
-    ByteBuffer recordBuffer = ByteBuffer.wrap(records);
 
-    int i = 0;
-    int offset = 0;
-    while (recordBuffer.hasRemaining() && i < length) {
-      byte payloadSize = recordBuffer.get();
-      // Skip rowid
-      recordBuffer.get();
-      // Payload starts here
-      byte payloadHeaderSize = recordBuffer.get();
-      byte typeSize = getSize(recordBuffer.get());
-      byte nameSize = getSize(recordBuffer.get());
-      byte tableNameSize = getSize(recordBuffer.get());
-      // Skip rest record header
-      recordBuffer.get(new byte[payloadHeaderSize - 4]);
-      // Record body starts here
-      // Skip sqlite_schema.type from body
-      byte[] typeBytes = new byte[typeSize];
-      recordBuffer.get(typeBytes);
-      // Skip sqlite_schema.name
-      byte[] nameBytes = new byte[nameSize];
-      recordBuffer.get(nameBytes);
-      // Get table name sqlite_schema.tbl_name
-      byte[] tableNameBytes = new byte[tableNameSize];
-      recordBuffer.get(tableNameBytes);
-      tableNames[i++] = new String(tableNameBytes);
-      // Skip the rest of the record body
-      int skipSize = payloadSize + 2 - (recordBuffer.position() - offset);
-      recordBuffer.get(new byte[skipSize]);
-      offset = recordBuffer.position();
-    }
-    return tableNames;
-  }
-
-  private static int getSize(int serialType) {
+  public static int getSize(int serialType) {
     if (isOddAndBiggerThan13(serialType)) {
       return (byte) ((serialType - 13) / 2);
     } else {
@@ -75,7 +40,7 @@ public class Utils {
     }
   }
 
-  private static byte getSize(byte serialType) {
+  public static byte getSize(byte serialType) {
     if (isOddAndBiggerThan13(serialType)) {
       return (byte) ((serialType - 13) / 2);
     } else {
