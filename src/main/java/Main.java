@@ -11,10 +11,13 @@ public class Main {
     String databaseFilePath = args[0];
     String command = args[1];
 
+
+    // You can use print statements as follows for debugging, they'll be visible when running tests.
+    System.out.println("Logs from your program will appear here!");
     switch (command) {
       case ".dbinfo" -> new DbInfoExecutor().execute(databaseFilePath);
       case ".tables" -> new TableExecutor().execute(databaseFilePath);
-      default -> System.out.println("Missing or invalid command passed: " + command);
+      default -> System.err.printf("Missing or invalid command passed: %s%n", command);
     }
   }
 }

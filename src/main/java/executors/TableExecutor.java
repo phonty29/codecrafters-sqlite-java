@@ -10,9 +10,7 @@ public class TableExecutor implements Executor {
 
   @Override
   public void execute(String filePath) {
-    try {
-      FileInputStream databaseFile = new FileInputStream(filePath);
-
+    try (FileInputStream databaseFile = new FileInputStream(filePath)) {
       databaseFile.skip(103); // Skip the first 16 bytes of the header
       byte[] numberOfTablesBytes = new byte[2];
       databaseFile.read(numberOfTablesBytes);
@@ -42,8 +40,6 @@ public class TableExecutor implements Executor {
       tableNames[tableNames.length-1] = Utils.getLastTableNameFromFile(databaseFile);
 
       Collections.reverse(Arrays.asList(tableNames));
-      // You can use print statements as follows for debugging, they'll be visible when running tests.
-      System.err.println("Logs from your program will appear here!");
 
       System.out.println(String.join(" ", tableNames));
     } catch (IOException e) {
