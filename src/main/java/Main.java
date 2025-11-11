@@ -1,4 +1,5 @@
 import executors.DbInfoExecutor;
+import executors.SqlSimpleExecutor;
 import executors.TableExecutor;
 
 public class Main {
@@ -13,10 +14,11 @@ public class Main {
 
 
     // You can use print statements as follows for debugging, they'll be visible when running tests.
-    System.out.println("Logs from your program will appear here!");
+    System.err.println("Logs from your program will appear here!");
     switch (command) {
       case ".dbinfo" -> new DbInfoExecutor().execute(databaseFilePath);
       case ".tables" -> new TableExecutor().execute(databaseFilePath);
+      case String s when s.toLowerCase().startsWith("select count(*) from") -> new SqlSimpleExecutor(command).execute(databaseFilePath);
       default -> System.err.printf("Missing or invalid command passed: %s%n", command);
     }
   }

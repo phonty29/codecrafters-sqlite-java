@@ -10,7 +10,8 @@ public class DbFile {
   private final FileChannel channel;
   private final int pageSize;
   private final int numberOfTables;
-  private final ByteBuffer pageBuffer;
+  private ByteBuffer pageBuffer;
+  private int currentPage = 1;
 
   public DbFile(FileInputStream databaseFile) throws IOException {
     this.databaseFile = databaseFile;
@@ -20,9 +21,7 @@ public class DbFile {
     ByteBuffer pageSizeBuffer = ByteBuffer.allocate(2);
     channel.read(pageSizeBuffer);
     this.pageSize = Short.toUnsignedInt(pageSizeBuffer.duplicate().clear().getShort());
-    // Copy first page to buffer
-    this.pageBuffer = ByteBuffer.allocate(pageSize);
-    channel.position(0).read(pageBuffer);
+    setPage(this.currentPage);
     // Get number of cells in sqlite_schema
     this.numberOfTables = pageBuffer.position(103).getShort();
   }
@@ -41,6 +40,13 @@ public class DbFile {
 
   public int getPageSize() {
     return this.pageSize;
+  }
+
+  public void setPage(int page) throws IOException {
+    // Copy page to buffer
+    this.currentPage = page;
+    this.pageBuffer = ByteBuffer.allocate(this.pageSize);
+    this.channel.position((long) (this.currentPage - 1) * this.pageSize).read(pageBuffer);
   }
 
   public ByteBuffer getPageBuffer() {
