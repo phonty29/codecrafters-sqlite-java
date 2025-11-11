@@ -1,37 +1,25 @@
 package executors;
 
-import static executors.Utils.getSize;
-import static executors.Utils.validateBTreePageType;
-
-import exceptions.IncorrectBTreePageType;
+import db.DbFile;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.Arrays;
-import java.util.Collections;
 
 public class TableExecutor implements Executor {
 
   @Override
   public void execute(String filePath) {
     try (FileInputStream databaseFile = new FileInputStream(filePath)) {
-      FileChannel channel = databaseFile.getChannel();
-      channel.position(16);
-      // Obtain page size
-      ByteBuffer pageSizeBuffer = ByteBuffer.allocate(2);
-      channel.read(pageSizeBuffer);
-      int pageSize = Short.toUnsignedInt(pageSizeBuffer.duplicate().clear().getShort());
-      // Copy first page to buffer
-      ByteBuffer pageBuffer = ByteBuffer.allocate(pageSize);
-      channel.position(0).read(pageBuffer);
-      // Get number of cells in sqlite_schema
-      short numberOfTables = pageBuffer.position(103).getShort();
-
+      DbFile dbFile = new DbFile(databaseFile);
       // Skip till cell pointer array
+      ByteBuffer pageBuffer = dbFile.getPageBuffer();
+      // Set position to after the "number of cells on the page"
+      pageBuffer.position(105);
+
       int cellHeaderTailLength = 3;
       pageBuffer.position(pageBuffer.position() + cellHeaderTailLength);
       // Slice Cell Pointer Array as buffer
+      int numberOfTables = dbFile.getNumberOfTables();
       ByteBuffer cellPointerArrayBuffer = pageBuffer.slice(pageBuffer.position(), 2*numberOfTables);
 
       String[] tableNames = new String[numberOfTables];
@@ -53,16 +41,14 @@ public class TableExecutor implements Executor {
   }
 
   private String getTableNameFromRecord(ByteBuffer recordBuffer) {
-    System.out.println("RecordBuffer capacity: " + recordBuffer.capacity());
-    System.out.println("RecordBuffer limit: " + recordBuffer.limit());
     byte payloadSize = recordBuffer.get();
     // Skip rowid
     recordBuffer.get();
     // Payload starts here
     byte payloadHeaderSize = recordBuffer.get();
-    byte typeSize = getSize(recordBuffer.get());
-    byte nameSize = getSize(recordBuffer.get());
-    byte tableNameSize = getSize(recordBuffer.get());
+    byte typeSize = getSizeFromSerialType(recordBuffer.get());
+    byte nameSize = getSizeFromSerialType(recordBuffer.get());
+    byte tableNameSize = getSizeFromSerialType(recordBuffer.get());
     // Skip rest record header
     recordBuffer.get(new byte[payloadHeaderSize - 4]);
     // Record body starts here
@@ -76,5 +62,13 @@ public class TableExecutor implements Executor {
     byte[] tableNameBytes = new byte[tableNameSize];
     recordBuffer.get(tableNameBytes);
     return new String(tableNameBytes);
+  }
+
+  private byte getSizeFromSerialType(byte serialType) {
+    if (serialType > 13 && (serialType%2 == 0)) {
+      return (byte) ((serialType - 13) / 2);
+    } else {
+      return (byte) ((serialType - 12) / 2);
+    }
   }
 }
