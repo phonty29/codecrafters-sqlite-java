@@ -1,6 +1,6 @@
 package executors;
 
-import db.DbFile;
+import db.Database;
 import db.Table;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -11,16 +11,16 @@ public class TableExecutor implements Executor {
   @Override
   public void execute(String filePath) {
     try (FileInputStream databaseFile = new FileInputStream(filePath)) {
-      DbFile dbFile = new DbFile(databaseFile);
+      Database database = new Database(databaseFile);
       // Skip till cell pointer array
-      ByteBuffer pageBuffer = dbFile.getPageBuffer();
+      ByteBuffer pageBuffer = database.getCurrentPageBuffer();
       // Set position to after the "number of cells on the page"
       pageBuffer.position(105);
 
       int cellHeaderTailLength = 3;
       pageBuffer.position(pageBuffer.position() + cellHeaderTailLength);
       // Slice Cell Pointer Array as buffer
-      int numberOfTables = dbFile.getNumberOfTables();
+      int numberOfTables = database.getNumberOfTables();
       ByteBuffer cellPointerArrayBuffer = pageBuffer.slice(pageBuffer.position(), 2*numberOfTables);
 
       String[] tableNames = new String[numberOfTables];

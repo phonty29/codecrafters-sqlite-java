@@ -1,28 +1,29 @@
 package db;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class Table {
-  private final ByteBuffer recordBuffer;
   private final String tableName;
   private final int rootPage;
   private ByteBuffer pageBuffer;
 
 
   public Table(ByteBuffer recordBuffer) {
-    this.recordBuffer = recordBuffer;
     byte payloadSize = recordBuffer.get();
     // Skip rowid
     recordBuffer.get();
     // Payload starts here
+    // Payload Header
     byte payloadHeaderSize = recordBuffer.get();
     byte typeSize = getSizeFromSerialType(recordBuffer.get());
     byte nameSize = getSizeFromSerialType(recordBuffer.get());
     byte tableNameSize = getSizeFromSerialType(recordBuffer.get());
     int rootPageSize = recordBuffer.get();
-
     // Skip rest record header
     recordBuffer.get(new byte[payloadHeaderSize - 5]);
+
     // Record body starts here
     // Skip sqlite_schema.type from body
     byte[] typeBytes = new byte[typeSize];
@@ -41,20 +42,25 @@ public class Table {
     this.rootPage = recordBuffer.get();
   }
 
+  public void setTablePageBuffer(ByteBuffer pageBuffer) {
+    this.pageBuffer = pageBuffer.duplicate().clear().asReadOnlyBuffer();
+  }
+
+  public int getRows() throws IOException {
+    int rowsPosition = 3;
+    if (Objects.nonNull(this.pageBuffer) && this.pageBuffer.limit() > rowsPosition) {
+      return Short.toUnsignedInt(this.pageBuffer.position(rowsPosition).getShort());
+    } else {
+      throw new IOException("Page size is less than required " + rowsPosition);
+    }
+  }
+
   public String getTableName() {
     return this.tableName;
   }
 
-  public void setPageBuffer(ByteBuffer pageBuffer) {
-    this.pageBuffer = pageBuffer;
-  }
-
   public int getRootPage() {
     return this.rootPage;
-  }
-
-  public ByteBuffer getRecordBuffer() {
-    return this.recordBuffer.duplicate().clear();
   }
 
   private byte getSizeFromSerialType(byte serialType) {

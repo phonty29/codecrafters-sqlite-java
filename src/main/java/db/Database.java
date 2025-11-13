@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
-public class DbFile {
+public class Database {
   private final FileInputStream databaseFile;
   private final FileChannel channel;
   private final int pageSize;
@@ -13,25 +13,20 @@ public class DbFile {
   private ByteBuffer pageBuffer;
   private int currentPage = 1;
 
-  public DbFile(FileInputStream databaseFile) throws IOException {
+  public Database(FileInputStream databaseFile) throws IOException {
     this.databaseFile = databaseFile;
     this.channel = databaseFile.getChannel();
+    // Skip Magic numbers
     this.channel.position(16);
-    // Obtain page size
+
+    // Get page size
     ByteBuffer pageSizeBuffer = ByteBuffer.allocate(2);
     channel.read(pageSizeBuffer);
-    this.pageSize = Short.toUnsignedInt(pageSizeBuffer.duplicate().clear().getShort());
-    setPage(this.currentPage);
+    this.pageSize = Short.toUnsignedInt(pageSizeBuffer.clear().getShort());
+    setCurrentPage(this.currentPage);
+
     // Get number of cells in sqlite_schema
     this.numberOfTables = pageBuffer.position(103).getShort();
-  }
-
-  public FileInputStream getDbFileInputStream() {
-    return this.databaseFile;
-  }
-
-  public FileChannel getDbFileChannel() {
-    return this.channel;
   }
 
   public int getNumberOfTables() {
@@ -42,14 +37,14 @@ public class DbFile {
     return this.pageSize;
   }
 
-  public void setPage(int page) throws IOException {
+  public void setCurrentPage(int page) throws IOException {
     // Copy page to buffer
     this.currentPage = page;
     this.pageBuffer = ByteBuffer.allocate(this.pageSize);
     this.channel.position((long) (this.currentPage - 1) * this.pageSize).read(pageBuffer);
   }
 
-  public ByteBuffer getPageBuffer() {
+  public ByteBuffer getCurrentPageBuffer() {
     return this.pageBuffer.duplicate().clear();
   }
 }
