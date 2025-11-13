@@ -38,8 +38,9 @@ public class Table {
     this.tableName = new String(tableNameBytes);
 
     // Get rootpage
-    // REFACTOR! Let's assume for now that the rootpage size is 1 byte
-    this.rootPage = recordBuffer.get();
+    byte[] rootPageBytes = new byte[rootPageSize];
+    recordBuffer.get(rootPageBytes);
+    this.rootPage = getRootPage(rootPageBytes);
   }
 
   public void setTablePageBuffer(ByteBuffer pageBuffer) {
@@ -69,5 +70,15 @@ public class Table {
     } else {
       return (byte) ((serialType - 12) / 2);
     }
+  }
+
+  private int getRootPage(byte[] rootPageBytes) {
+    int size = rootPageBytes.length;
+    return switch (size) {
+      case 1 -> ByteBuffer.wrap(rootPageBytes).get();
+      case 2 -> ByteBuffer.wrap(rootPageBytes).getShort();
+      case 4 -> ByteBuffer.wrap(rootPageBytes).getInt();
+      default -> throw new IllegalStateException("Rootpage couldn't be cast to integer type");
+    };
   }
 }
