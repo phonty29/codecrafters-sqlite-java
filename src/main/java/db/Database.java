@@ -12,6 +12,7 @@ public class Database {
   private final int numberOfTables;
   private ByteBuffer pageBuffer;
   private int currentPage = 1;
+  private final Table[] tables;
 
   public Database(FileInputStream databaseFile) throws IOException {
     this.databaseFile = databaseFile;
@@ -27,6 +28,26 @@ public class Database {
 
     // Get number of cells in sqlite_schema
     this.numberOfTables = pageBuffer.position(103).getShort();
+
+    // Set position to after the "number of cells on the page"
+    pageBuffer.position(105);
+    int cellHeaderTailLength = 3;
+    pageBuffer.position(pageBuffer.position() + cellHeaderTailLength);
+    // Slice Cell Pointer Array as buffer
+    ByteBuffer cellPointerArrayBuffer = pageBuffer.slice(pageBuffer.position(), 2*numberOfTables);
+
+    // Initialize tables
+    this.tables = new Table[numberOfTables];
+    short[] offsets = new short[numberOfTables];
+    for (int i = 0; i < numberOfTables; i++) {
+      // The last table offset goes first, so printing order from last-to-first
+      offsets[i] = cellPointerArrayBuffer.getShort();
+      if (i == 0) {
+        tables[i] = new Table(pageBuffer.position(offsets[i]).slice());
+      } else {
+        tables[i] = new Table(pageBuffer.slice(offsets[i], offsets[i-1] - offsets[i]));
+      }
+    }
   }
 
   public int getNumberOfTables() {
@@ -35,6 +56,10 @@ public class Database {
 
   public int getPageSize() {
     return this.pageSize;
+  }
+
+  public Table[] getTables() {
+    return this.tables;
   }
 
   public void setCurrentPage(int page) throws IOException {
