@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 public class Table {
+
   private final String tableName;
   private final int rootPage;
   private ByteBuffer pageBuffer;
@@ -65,7 +66,7 @@ public class Table {
   }
 
   private byte getSizeFromSerialType(byte serialType) {
-    if (serialType > 13 && (serialType%2 == 0)) {
+    if (serialType > 13 && (serialType % 2 == 0)) {
       return (byte) ((serialType - 13) / 2);
     } else {
       return (byte) ((serialType - 12) / 2);

@@ -8,12 +8,12 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Optional;
 
-public class SqlSimpleExecutor implements Executor {
+public class QueryExecutor implements Executor {
 
   private final String sqlCommand;
   private final String tableName;
 
-  public SqlSimpleExecutor(String sqlCommand) {
+  public QueryExecutor(String sqlCommand) {
     this.sqlCommand = sqlCommand;
     String[] splitSqlCommand = this.sqlCommand.trim().split("\\s+");
     this.tableName = splitSqlCommand[splitSqlCommand.length - 1];

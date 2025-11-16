@@ -6,13 +6,14 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 public class Database {
+
   private final FileInputStream databaseFile;
   private final FileChannel channel;
   private final int pageSize;
   private final int numberOfTables;
+  private final Table[] tables;
   private ByteBuffer pageBuffer;
   private int currentPage = 1;
-  private final Table[] tables;
 
   public Database(FileInputStream databaseFile) throws IOException {
     this.databaseFile = databaseFile;
@@ -34,7 +35,7 @@ public class Database {
     int cellHeaderTailLength = 3;
     pageBuffer.position(pageBuffer.position() + cellHeaderTailLength);
     // Slice Cell Pointer Array as buffer
-    ByteBuffer cellPointerArrayBuffer = pageBuffer.slice(pageBuffer.position(), 2*numberOfTables);
+    ByteBuffer cellPointerArrayBuffer = pageBuffer.slice(pageBuffer.position(), 2 * numberOfTables);
 
     // Initialize tables
     this.tables = new Table[numberOfTables];
@@ -45,7 +46,7 @@ public class Database {
       if (i == 0) {
         tables[i] = new Table(pageBuffer.position(offsets[i]).slice());
       } else {
-        tables[i] = new Table(pageBuffer.slice(offsets[i], offsets[i-1] - offsets[i]));
+        tables[i] = new Table(pageBuffer.slice(offsets[i], offsets[i - 1] - offsets[i]));
       }
     }
   }
@@ -60,6 +61,10 @@ public class Database {
 
   public Table[] getTables() {
     return this.tables;
+  }
+
+  public FileInputStream getFile() {
+    return this.databaseFile;
   }
 
   public void setCurrentPage(int page) throws IOException {
