@@ -1,4 +1,4 @@
-package query_processor.lexer;
+package processor.lexer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,8 +7,6 @@ import java.util.Map;
 
 public class SqlLexer {
 
-  private final String s;
-  private int i = 0;
   private static final Map<String, TokenType> KEYWORDS = new HashMap<>();
 
   static {
@@ -28,6 +26,9 @@ public class SqlLexer {
     KEYWORDS.put("ASC", TokenType.KEYWORD_ASC);
     KEYWORDS.put("DESC", TokenType.KEYWORD_DESC);
   }
+
+  private final String s;
+  private int i = 0;
 
   public SqlLexer(String s) {
     this.s = s;

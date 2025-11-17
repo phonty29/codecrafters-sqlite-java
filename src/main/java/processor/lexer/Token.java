@@ -1,6 +1,7 @@
-package query_processor.lexer;
+package processor.lexer;
 
 public final class Token {
+
   public final TokenType type;
   public final String text;
   public final int pos;

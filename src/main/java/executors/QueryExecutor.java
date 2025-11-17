@@ -6,33 +6,48 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import processor.lexer.SqlLexer;
+import processor.lexer.Token;
+import processor.parser.SqlParser;
+import processor.parser.ast.FunctionCall;
+import processor.parser.ast.SelectItem;
+import processor.parser.ast.SelectStmt;
+import processor.parser.ast.TableRef;
 
 public class QueryExecutor implements Executor {
+  private final SelectStmt queryTree;
 
-  private final String sqlCommand;
-  private final String tableName;
-
-  public QueryExecutor(String sqlCommand) {
-    this.sqlCommand = sqlCommand;
-    String[] splitSqlCommand = this.sqlCommand.trim().split("\\s+");
-    this.tableName = splitSqlCommand[splitSqlCommand.length - 1];
+  public QueryExecutor(String query) {
+    List<Token> tokens = new SqlLexer(query).tokenize();
+    this.queryTree = new SqlParser(tokens).parseSelect();
   }
 
   @Override
   public void execute(String filePath) {
     try (FileInputStream databaseFile = new FileInputStream(filePath)) {
       Database database = new Database(databaseFile);
-      Optional<Table> optionalTable = Arrays.stream(database.getTables())
+
+      String tableName = ((TableRef) this.queryTree.from()).name();
+      Table table = Arrays.stream(database.getTables())
           .filter(t -> t.getTableName().contains(tableName))
-          .findFirst();
-      if (optionalTable.isPresent()) {
-        Table table = optionalTable.get();
-        database.setCurrentPage(table.getRootPage());
-        ByteBuffer pageBuffer = database.getCurrentPageBuffer();
-        table.setTablePageBuffer(pageBuffer);
+          .findFirst()
+          .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
+
+      database.setCurrentPage(table.getRootPage());
+      ByteBuffer pageBuffer = database.getCurrentPageBuffer();
+      table.setTablePageBuffer(pageBuffer);
+
+      List<SelectItem> items = this.queryTree.selectList();
+      if (items.size() == 1 &&
+          items.getFirst().expr() instanceof FunctionCall &&
+          ((FunctionCall) items.getFirst().expr()).name().equals("count")
+      ) {
         System.out.println(table.getRows());
       }
+
     } catch (IOException e) {
       System.out.println("Error reading file: " + e.getMessage());
     }

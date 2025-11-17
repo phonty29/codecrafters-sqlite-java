@@ -1,26 +1,58 @@
-package query_processor.parser;
+package processor.parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import query_processor.lexer.Token;
-import query_processor.lexer.TokenType;
+import processor.lexer.Token;
+import processor.lexer.TokenType;
+import processor.parser.ast.BinaryOp;
+import processor.parser.ast.Expression;
+import processor.parser.ast.FromItem;
+import processor.parser.ast.FunctionCall;
+import processor.parser.ast.Identifier;
+import processor.parser.ast.Literal;
+import processor.parser.ast.OrderItem;
+import processor.parser.ast.SelectItem;
+import processor.parser.ast.SelectStmt;
+import processor.parser.ast.SubqueryRef;
+import processor.parser.ast.TableRef;
+import processor.parser.ast.UnaryOp;
 
 public class SqlParser {
+
+  // ----- Pratt expression parser -----
+  // precedence numbers (lower = tighter binding)
+  private static final Map<TokenType, Integer> INFIX_PRECEDENCE = new HashMap<>();
+
+  static {
+    INFIX_PRECEDENCE.put(TokenType.MUL, 70);
+    INFIX_PRECEDENCE.put(TokenType.DIV, 70);
+    INFIX_PRECEDENCE.put(TokenType.PLUS, 60);
+    INFIX_PRECEDENCE.put(TokenType.MINUS, 60);
+    INFIX_PRECEDENCE.put(TokenType.EQ, 50);
+    INFIX_PRECEDENCE.put(TokenType.NEQ, 50);
+    INFIX_PRECEDENCE.put(TokenType.LT, 50);
+    INFIX_PRECEDENCE.put(TokenType.LTE, 50);
+    INFIX_PRECEDENCE.put(TokenType.GT, 50);
+    INFIX_PRECEDENCE.put(TokenType.GTE, 50);
+    INFIX_PRECEDENCE.put(TokenType.KEYWORD_AND, 30);
+    INFIX_PRECEDENCE.put(TokenType.KEYWORD_OR, 20);
+  }
+
   private final List<Token> tokens;
   private int p = 0;
 
-  public SqlParser(List<Token> tokens){
+  public SqlParser(List<Token> tokens) {
     this.tokens = tokens;
   }
 
-  private Token t(){
+  private Token t() {
     return tokens.get(p);
   }
 
-  private boolean match(TokenType... types){
-    for (TokenType ty: types) {
+  private boolean match(TokenType... types) {
+    for (TokenType ty : types) {
       if (t().type == ty) {
         p++;
         return true;
@@ -29,7 +61,7 @@ public class SqlParser {
     return false;
   }
 
-  private Token consume(TokenType ty, String err){
+  private Token consume(TokenType ty, String err) {
     if (t().type == ty) {
       return tokens.get(p++);
     }
@@ -60,11 +92,11 @@ public class SqlParser {
       Token num = consume(TokenType.NUMBER, "expected offset number");
       offset = Integer.parseInt(num.text);
     }
-    if (match(TokenType.SEMICOLON)) { /* ok */ }
+    match(TokenType.SEMICOLON);
     return new SelectStmt(select, from, where, order, limit, offset);
   }
 
-  private List<SelectItem> parseSelectList(){
+  private List<SelectItem> parseSelectList() {
     List<SelectItem> out = new ArrayList<>();
     if (match(TokenType.STAR)) {
       out.add(new SelectItem(new Identifier("*"), null));
@@ -79,9 +111,10 @@ public class SqlParser {
       } else if (t().type == TokenType.IDENT) { // allow implicit alias
         Token maybe = tokens.get(p);
         // lookahead: next token is comma/ FROM / WHERE etc -> treat as alias
-        Token next = tokens.get(p+1);
-        if (next.type == TokenType.COMMA || next.type == TokenType.KEYWORD_FROM || next.type == TokenType.KEYWORD_WHERE
-            || next.type == TokenType.SEMICOLON || next.type==TokenType.EOF) {
+        Token next = tokens.get(p + 1);
+        if (next.type == TokenType.COMMA || next.type == TokenType.KEYWORD_FROM
+            || next.type == TokenType.KEYWORD_WHERE
+            || next.type == TokenType.SEMICOLON || next.type == TokenType.EOF) {
           alias = maybe.text;
           p++;
         }
@@ -91,15 +124,14 @@ public class SqlParser {
     return out;
   }
 
-  private FromItem parseFromItem(){
+  private FromItem parseFromItem() {
     if (match(TokenType.LPAREN)) {
       SelectStmt sub = parseSelect();
       consume(TokenType.RPAREN, "expected ) after subquery");
       String alias = null;
       if (match(TokenType.KEYWORD_AS)) {
         alias = consume(TokenType.IDENT, "alias").text;
-      }
-      else if (t().type == TokenType.IDENT) {
+      } else if (t().type == TokenType.IDENT) {
         alias = t().text;
         p++;
       }
@@ -109,8 +141,7 @@ public class SqlParser {
       String alias = null;
       if (match(TokenType.KEYWORD_AS)) {
         alias = consume(TokenType.IDENT, "expected alias").text;
-      }
-      else if (t().type == TokenType.IDENT) {
+      } else if (t().type == TokenType.IDENT) {
         alias = t().text;
         p++;
       }
@@ -118,31 +149,16 @@ public class SqlParser {
     }
   }
 
-  // ----- Pratt expression parser -----
-  // precedence numbers (lower = tighter binding)
-  private static final Map<TokenType, Integer> INFIX_PRECEDENCE = new HashMap<>();
-  static {
-    INFIX_PRECEDENCE.put(TokenType.MUL, 70);
-    INFIX_PRECEDENCE.put(TokenType.DIV, 70);
-    INFIX_PRECEDENCE.put(TokenType.PLUS, 60);
-    INFIX_PRECEDENCE.put(TokenType.MINUS, 60);
-    INFIX_PRECEDENCE.put(TokenType.EQ, 50);
-    INFIX_PRECEDENCE.put(TokenType.NEQ, 50);
-    INFIX_PRECEDENCE.put(TokenType.LT, 50);
-    INFIX_PRECEDENCE.put(TokenType.LTE, 50);
-    INFIX_PRECEDENCE.put(TokenType.GT, 50);
-    INFIX_PRECEDENCE.put(TokenType.GTE, 50);
-    INFIX_PRECEDENCE.put(TokenType.KEYWORD_AND, 30);
-    INFIX_PRECEDENCE.put(TokenType.KEYWORD_OR, 20);
-  }
-
   private Expression parseExpression(int minPrec) {
     Expression left = parsePrefix();
     while (true) {
       TokenType tt = t().type;
       Integer prec = INFIX_PRECEDENCE.get(tt);
-      if (prec == null || prec <= minPrec) break;
-      Token op = t(); p++;
+      if (prec == null || prec <= minPrec) {
+        break;
+      }
+      Token op = t();
+      p++;
       // special handling for IN (list) and function calls handled in prefix if needed
       Expression right = parseExpression(prec);
       left = new BinaryOp(op.text, left, right);
@@ -178,7 +194,7 @@ public class SqlParser {
     }
     if (match(TokenType.LPAREN)) {
       Expression e = parseExpression(0);
-      consume(TokenType.RPAREN,"expected )");
+      consume(TokenType.RPAREN, "expected )");
       return e;
     }
     if (match(TokenType.PLUS) || match(TokenType.MINUS) || match(TokenType.KEYWORD_NOT)) {
@@ -193,13 +209,11 @@ public class SqlParser {
   }
 
 
-  private List<OrderItem> parseOrderBy(){
+  private List<OrderItem> parseOrderBy() {
     List<OrderItem> out = new ArrayList<>();
     do {
       Expression e = parseExpression(0);
-      boolean asc = true;
-      if (match(TokenType.KEYWORD_ASC)) asc = true;
-      else if (match(TokenType.KEYWORD_DESC)) asc = false;
+      boolean asc = !match(TokenType.KEYWORD_DESC);
       out.add(new OrderItem(e, asc));
     } while (match(TokenType.COMMA));
     return out;
