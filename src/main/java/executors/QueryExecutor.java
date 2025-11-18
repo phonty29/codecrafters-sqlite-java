@@ -13,6 +13,7 @@ import processor.lexer.SqlLexer;
 import processor.lexer.Token;
 import processor.parser.SqlParser;
 import processor.parser.ast.FunctionCall;
+import processor.parser.ast.Identifier;
 import processor.parser.ast.SelectItem;
 import processor.parser.ast.SelectStmt;
 import processor.parser.ast.TableRef;
@@ -41,11 +42,20 @@ public class QueryExecutor implements Executor {
       table.setTablePageBuffer(pageBuffer);
 
       List<SelectItem> items = this.queryTree.selectList();
+      // select count(*) from table;
       if (items.size() == 1 &&
           items.getFirst().expr() instanceof FunctionCall &&
           ((FunctionCall) items.getFirst().expr()).name().equals("count")
       ) {
         System.out.println(table.getRows());
+      }
+
+      if (items.size() == 1 &&
+          items.getFirst().expr() instanceof Identifier
+      ) {
+        String column = ((Identifier) items.getFirst().expr()).name();
+        System.out.println("Required column: " + column);
+        System.out.println("SQL statement: " + table.getSqlStmt());
       }
 
     } catch (IOException e) {

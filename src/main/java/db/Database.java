@@ -41,7 +41,7 @@ public class Database {
     this.tables = new Table[numberOfTables];
     short[] offsets = new short[numberOfTables];
     for (int i = 0; i < numberOfTables; i++) {
-      // The last table offset goes first, so printing order from last-to-first
+      // The last table offset goes the first
       offsets[i] = cellPointerArrayBuffer.getShort();
       if (i == 0) {
         tables[i] = new Table(pageBuffer.position(offsets[i]).slice());
