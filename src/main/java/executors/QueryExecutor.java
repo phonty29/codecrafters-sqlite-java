@@ -65,8 +65,10 @@ public class QueryExecutor implements Executor {
             columnOrder = i;
           }
         }
-        System.out.println(columnOrder);
-
+        if (columnOrder == -1) {
+          throw new IllegalArgumentException("Column not found: " + column);
+        }
+        table.getAllByColumn(columnOrder).forEach(System.out::println);
       }
 
     } catch (IOException e) {

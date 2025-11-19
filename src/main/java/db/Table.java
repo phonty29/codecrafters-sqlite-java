@@ -3,6 +3,7 @@ package db;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 public class Table {
@@ -63,6 +64,10 @@ public class Table {
     } else {
       throw new IOException("Page size is less than required " + rowsPosition);
     }
+  }
+
+  public List<String> getAllByColumn(int columnOrder) {
+    return List.of();
   }
 
   public String getTableName() {
