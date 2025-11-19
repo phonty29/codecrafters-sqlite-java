@@ -12,8 +12,8 @@ public class SqlProcessor {
     List<Token> tokens = lexer.tokenize();
     SqlParser parser = new SqlParser(tokens);
     return switch (query) {
-      case String q when q.startsWith("select") -> parser.parseSelect();
-      case String q when q.startsWith("create") -> parser.parseCreateStmt();
+      case String q when q.toLowerCase().startsWith("select") -> parser.parseSelect();
+      case String q when q.toLowerCase().startsWith("create") -> parser.parseCreateStmt();
       default -> throw new IllegalArgumentException("Unknown query: " + query);
     };
   }

@@ -59,7 +59,14 @@ public class QueryExecutor implements Executor {
       ) {
         String column = ((Identifier) items.getFirst().expr()).name();
         CreateStmt createStmt = (CreateStmt) this.sqlProcessor.process(table.getSqlStmt());
-        System.out.println(createStmt);
+        int columnOrder = -1;
+        for (int i = 0; i < createStmt.columns().size(); i++) {
+          if (column.contentEquals(createStmt.columns().get(i).name())) {
+            columnOrder = i;
+          }
+        }
+        System.out.println(columnOrder);
+
       }
 
     } catch (IOException e) {
