@@ -13,42 +13,42 @@ public class Table {
   private ByteBuffer pageBuffer;
 
 
-  public Table(ByteBuffer recordBuffer) {
-    byte payloadSize = recordBuffer.get();
-    // Skip rowid
-    recordBuffer.get();
-    // Payload starts here
+  public Table(ByteBuffer cellBuffer) {
+    // Cell
+    int payloadSize = readVarInt(cellBuffer);
+    int rowid = readVarInt(cellBuffer);
+    // Payload
     // Payload Header
-    byte payloadHeaderSize = recordBuffer.get();
-    byte typeSize = (byte) getSizeFromSerialType(recordBuffer.get());
-    byte nameSize = (byte) getSizeFromSerialType(recordBuffer.get());
-    byte tableNameSize = (byte) getSizeFromSerialType(recordBuffer.get());
-    int rootPageSize = recordBuffer.get();
+    int payloadHeaderSize = readVarInt(cellBuffer);
+    int typeSize = getSizeFromSerialType(readVarInt(cellBuffer));
+    int nameSize = getSizeFromSerialType(readVarInt(cellBuffer));
+    int tableNameSize = getSizeFromSerialType(readVarInt(cellBuffer));
+    int rootPageSize = readVarInt(cellBuffer);
     byte[] sqlStmtSizeBytes = new byte[payloadHeaderSize - 5];
-    recordBuffer.get(sqlStmtSizeBytes);
-    int sqlStmtSize = getSizeFromSerialType(readUnsignedVarInt(sqlStmtSizeBytes));
+    cellBuffer.get(sqlStmtSizeBytes);
+    int sqlStmtSize = getSizeFromSerialType(readVarInt(sqlStmtSizeBytes));
 
     // Record body starts here
     // Skip sqlite_schema.type from body
     byte[] typeBytes = new byte[typeSize];
-    recordBuffer.get(typeBytes);
+    cellBuffer.get(typeBytes);
     // Skip sqlite_schema.name
     byte[] nameBytes = new byte[nameSize];
-    recordBuffer.get(nameBytes);
+    cellBuffer.get(nameBytes);
 
     // Get table name sqlite_schema.tbl_name
     byte[] tableNameBytes = new byte[tableNameSize];
-    recordBuffer.get(tableNameBytes);
+    cellBuffer.get(tableNameBytes);
     this.tableName = new String(tableNameBytes);
 
     // Get rootpage
     byte[] rootPageBytes = new byte[rootPageSize];
-    recordBuffer.get(rootPageBytes);
+    cellBuffer.get(rootPageBytes);
     this.rootPage = getRootPage(rootPageBytes);
 
     // Get SQL `create` statement
     byte[] sqlStmtBytes = new byte[sqlStmtSize];
-    recordBuffer.get(sqlStmtBytes);
+    cellBuffer.get(sqlStmtBytes);
     this.sqlStmt = new String(sqlStmtBytes);
   }
 
@@ -80,9 +80,10 @@ public class Table {
   private int getSizeFromSerialType(int serialType) {
     if (serialType > 13 && (serialType % 2 == 0)) {
       return (serialType - 13) / 2;
-    } else {
+    } else if (serialType > 12) {
       return (serialType - 12) / 2;
     }
+    return serialType;
   }
 
   private int getRootPage(byte[] rootPageBytes) {
@@ -94,7 +95,7 @@ public class Table {
     };
   }
 
-  private int readUnsignedVarInt(byte[] data) {
+  private int readVarInt(byte[] data) {
     int value = 0;
 
     for (int i = 0; i < 9; i++) {
@@ -115,4 +116,20 @@ public class Table {
     }
     throw new IllegalArgumentException("Value too large for unsigned varint");
   }
+
+  // Warning! This method has side effects. Refactor it to immutability of cellBuffer
+  private int readVarInt(ByteBuffer cellBuffer) {
+    int result = 0;
+    for (int i = 0; i < 8; i++) {
+      final byte current = cellBuffer.get();
+      result = (result << 7) + (current & 0x7F);
+      if ((current & 0x80) == 0) {
+        return result;
+      }
+    }
+    final byte last = cellBuffer.get();
+    result = (result << 8) + last;
+    return result;
+  }
+
 }

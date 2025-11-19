@@ -9,9 +9,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import processor.SqlProcessor;
 import processor.lexer.SqlLexer;
 import processor.lexer.Token;
 import processor.parser.SqlParser;
+import processor.parser.ast.CreateStmt;
 import processor.parser.ast.FunctionCall;
 import processor.parser.ast.Identifier;
 import processor.parser.ast.SelectItem;
@@ -19,11 +21,12 @@ import processor.parser.ast.SelectStmt;
 import processor.parser.ast.TableRef;
 
 public class QueryExecutor implements Executor {
+  private final SqlProcessor sqlProcessor;
   private final SelectStmt queryTree;
 
   public QueryExecutor(String query) {
-    List<Token> tokens = new SqlLexer(query).tokenize();
-    this.queryTree = new SqlParser(tokens).parseSelect();
+    this.sqlProcessor = new SqlProcessor();
+    this.queryTree = (SelectStmt) this.sqlProcessor.process(query);
   }
 
   @Override
@@ -50,12 +53,13 @@ public class QueryExecutor implements Executor {
         System.out.println(table.getRows());
       }
 
+      // select [columnName] from [tableName];
       if (items.size() == 1 &&
           items.getFirst().expr() instanceof Identifier
       ) {
         String column = ((Identifier) items.getFirst().expr()).name();
-        System.out.println("Required column: " + column);
-        System.out.println("SQL statement: " + table.getSqlStmt());
+        CreateStmt createStmt = (CreateStmt) this.sqlProcessor.process(table.getSqlStmt());
+        System.out.println(createStmt);
       }
 
     } catch (IOException e) {

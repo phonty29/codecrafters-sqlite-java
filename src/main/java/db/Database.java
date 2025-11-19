@@ -11,6 +11,7 @@ public class Database {
   private final FileChannel channel;
   private final int pageSize;
   private final int numberOfTables;
+  private final byte bTreePageType;
   private final Table[] tables;
   private ByteBuffer pageBuffer;
   private int currentPage = 1;
@@ -26,6 +27,10 @@ public class Database {
     channel.read(pageSizeBuffer);
     this.pageSize = Short.toUnsignedInt(pageSizeBuffer.clear().getShort());
     setCurrentPage(this.currentPage);
+
+    // Get the b-tree page type
+    pageBuffer.position(100);
+    this.bTreePageType = pageBuffer.get();
 
     // Get number of cells in sqlite_schema
     this.numberOfTables = pageBuffer.position(103).getShort();

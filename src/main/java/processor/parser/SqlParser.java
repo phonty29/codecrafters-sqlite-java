@@ -7,6 +7,10 @@ import java.util.Map;
 import processor.lexer.Token;
 import processor.lexer.TokenType;
 import processor.parser.ast.BinaryOp;
+import processor.parser.ast.Column;
+import processor.parser.ast.ColumnType;
+import processor.parser.ast.Constraint;
+import processor.parser.ast.CreateStmt;
 import processor.parser.ast.Expression;
 import processor.parser.ast.FromItem;
 import processor.parser.ast.FunctionCall;
@@ -66,6 +70,76 @@ public class SqlParser {
       return tokens.get(p++);
     }
     throw new RuntimeException("Parse error at " + t().pos + ": " + err + " got " + t());
+  }
+
+  public CreateStmt parseCreateStmt() {
+    consume(TokenType.KEYWORD_CREATE, "expected CREATE");
+    consume(TokenType.KEYWORD_TABLE, "expected TABLE after CREATE");
+    Token name = consume(TokenType.IDENT, "expected table name");
+    List<Column> columns = parseColumns();
+    return new CreateStmt(name.text, columns);
+  }
+
+  private List<Column> parseColumns() {
+    consume(TokenType.LPAREN, "expected ( after CREATE TABLE [tableName]");
+    List<Column> columns = new ArrayList<>();
+    do {
+      Token columnName = consume(TokenType.IDENT, "Expected IDENT [columnName]");
+      ColumnType columnType = parseColumnType();
+      List<Constraint> constraints = parseConstraints();
+      columns.add(new Column(columnName.text, columnType, constraints));
+    } while (match(TokenType.COMMA));
+    return columns;
+  }
+
+  private boolean isConstraint(TokenType tt) {
+    return tt == TokenType.KEYWORD_PRIMARY
+        || tt == TokenType.KEYWORD_NOT
+        || tt == TokenType.KEYWORD_UNIQUE
+        || tt == TokenType.KEYWORD_DEFAULT
+        || tt == TokenType.KEYWORD_AUTOINCREMENT;
+  }
+
+  private List<Constraint> parseConstraints() {
+    List<Constraint> constraints = new ArrayList<>();
+    while (isConstraint(t().type)) {
+      if (match(TokenType.KEYWORD_PRIMARY)) {
+        consume(TokenType.KEYWORD_KEY, "Expected KEY after PRIMARY");
+        constraints.add(new Constraint("PRIMARY KEY", null));
+        continue;
+      }
+      if (match(TokenType.KEYWORD_NOT)) {
+        consume(TokenType.KEYWORD_NULL, "Expected NULL after NOT");
+        constraints.add(new Constraint("NOT NULL", null));
+        continue;
+      }
+      if (match(TokenType.KEYWORD_DEFAULT)) {
+        Expression expr = parseExpression(0);
+        constraints.add(new Constraint("DEFAULT", expr));
+        continue;
+      }
+      if (match(TokenType.KEYWORD_AUTOINCREMENT)) {
+        constraints.add(new Constraint("AUTOINCREMENT", null));
+        continue;
+      }
+      // … other constraints …
+      throw new IllegalStateException("Unsupported constraint at " + t());
+    }
+    return constraints;
+  }
+
+  private ColumnType parseColumnType() {
+    if (match(TokenType.TYPE_INTEGER)) {
+      return ColumnType.INTEGER;
+    } else if (match(TokenType.TYPE_TEXT)) {
+      return ColumnType.TEXT;
+    } else if (match(TokenType.TYPE_REAL)) {
+      return ColumnType.REAL;
+    } else if (match(TokenType.KEYWORD_NULL)) {
+      return ColumnType.NULL;
+    }
+
+    throw new IllegalArgumentException("Unkown column type: " + t().text);
   }
 
   public SelectStmt parseSelect() {

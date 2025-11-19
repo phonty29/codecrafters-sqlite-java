@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class SqlLexer {
 
@@ -25,6 +26,16 @@ public class SqlLexer {
     KEYWORDS.put("BY", TokenType.KEYWORD_BY);
     KEYWORDS.put("ASC", TokenType.KEYWORD_ASC);
     KEYWORDS.put("DESC", TokenType.KEYWORD_DESC);
+    KEYWORDS.put("CREATE", TokenType.KEYWORD_CREATE);
+    KEYWORDS.put("TABLE", TokenType.KEYWORD_TABLE);
+    KEYWORDS.put("PRIMARY", TokenType.KEYWORD_PRIMARY);
+    KEYWORDS.put("KEY", TokenType.KEYWORD_KEY);
+    KEYWORDS.put("AUTOINCREMENT", TokenType.KEYWORD_AUTOINCREMENT);
+    KEYWORDS.put("DEFAULT", TokenType.KEYWORD_DEFAULT);
+    KEYWORDS.put("UNIQUE", TokenType.KEYWORD_UNIQUE);
+    KEYWORDS.put("INTEGER", TokenType.TYPE_INTEGER);
+    KEYWORDS.put("TEXT", TokenType.TYPE_TEXT);
+    KEYWORDS.put("REAL", TokenType.TYPE_REAL);
   }
 
   private final String s;
@@ -91,11 +102,6 @@ public class SqlLexer {
       if (c == '-') {
         next();
         out.add(new Token(TokenType.MINUS, "-", pos));
-        continue;
-      }
-      if (c == '*') {
-        next();
-        out.add(new Token(TokenType.MUL, "*", pos));
         continue;
       }
       if (c == '/') {
@@ -171,11 +177,7 @@ public class SqlLexer {
         }
         String w = sb.toString();
         TokenType kt = KEYWORDS.get(w.toUpperCase());
-        if (kt != null) {
-          out.add(new Token(kt, w, pos));
-        } else {
-          out.add(new Token(TokenType.IDENT, w, pos));
-        }
+        out.add(new Token(Objects.requireNonNullElse(kt, TokenType.IDENT), w, pos));
         continue;
       }
       throw new RuntimeException("Unknown char at " + pos + ": " + c);
