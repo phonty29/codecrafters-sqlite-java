@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import processor.parser.ast.Column;
+import processor.parser.ast.ColumnType;
 
 public class Table {
 
@@ -90,10 +91,23 @@ public class Table {
         // Payload Header
         int payloadHeaderSize = readVarInt(cellBuffer);
         int it = 0;
-        while (cellBuffer.position() < payloadHeaderSize && it < order) {
-//          int val = getSizeFromSerialType();
-
+        int[] sizes = new int[order];
+        int currentPosition = cellBuffer.position();
+        while (cellBuffer.position() - currentPosition < payloadHeaderSize) {
+          int size= getSizeFromSerialType(readVarInt(cellBuffer));
+          if (it < order) {
+            sizes[it++]= size;
+          }
         }
+        // skip
+        for (int j = 0; j < order-1; j++) {
+          cellBuffer.position(cellBuffer.position() + sizes[j]);
+        }
+        // Read value
+        cellBuffer.position(cellBuffer.position() - 1);
+        byte[] valueBytes = new byte[sizes[order-1]];
+        cellBuffer.get(valueBytes);
+        System.out.println(new String(valueBytes));
       }
     } else {
       throw new IOException("Page size is less than required " + cellPointerArrayPosition);
@@ -115,9 +129,9 @@ public class Table {
   }
 
   private int getSizeFromSerialType(int serialType) {
-    if (serialType > 13 && (serialType % 2 == 0)) {
+    if (serialType >= 13 && (serialType % 2 == 1)) {
       return (serialType - 13) / 2;
-    } else if (serialType > 12) {
+    } else if (serialType >= 12) {
       return (serialType - 12) / 2;
     }
     return serialType;
