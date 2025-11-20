@@ -2,9 +2,11 @@ package db;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import processor.parser.ast.Column;
 
 public class Table {
 
@@ -24,10 +26,8 @@ public class Table {
     int typeSize = getSizeFromSerialType(readVarInt(cellBuffer));
     int nameSize = getSizeFromSerialType(readVarInt(cellBuffer));
     int tableNameSize = getSizeFromSerialType(readVarInt(cellBuffer));
-    int rootPageSize = readVarInt(cellBuffer);
-    byte[] sqlStmtSizeBytes = new byte[payloadHeaderSize - 5];
-    cellBuffer.get(sqlStmtSizeBytes);
-    int sqlStmtSize = getSizeFromSerialType(readVarInt(sqlStmtSizeBytes));
+    int rootPageSize = getSizeFromSerialType(readVarInt(cellBuffer));
+    int sqlStmtSize = getSizeFromSerialType(readVarInt(cellBuffer));
 
     // Record body starts here
     // Skip sqlite_schema.type from body
@@ -66,7 +66,39 @@ public class Table {
     }
   }
 
-  public List<String> getAllByColumn(int columnOrder) {
+  public List<String> getAllByColumn(Column column, int order) throws IOException {
+    int cellPointerArrayPosition = 8;
+    if (Objects.nonNull(this.pageBuffer) && this.pageBuffer.limit() > cellPointerArrayPosition) {
+      int rows = this.getRows();
+      pageBuffer.position(cellPointerArrayPosition);
+      ByteBuffer cellPointerArrayBuffer = pageBuffer.slice(pageBuffer.position(), 2 * rows);
+      short[] offsets = new short[rows];
+      List<String> values = new ArrayList<>();
+      for (int i = 0; i < rows; i++) {
+        // The last table offset goes the first
+        offsets[i] = cellPointerArrayBuffer.getShort();
+        ByteBuffer cellBuffer;
+        if (i == 0) {
+          cellBuffer = pageBuffer.position(offsets[i]).slice();
+        } else {
+          cellBuffer = pageBuffer.slice(offsets[i], offsets[i - 1] - offsets[i]);
+        }
+        // Cell
+        int payloadSize = readVarInt(cellBuffer);
+        int rowid = readVarInt(cellBuffer);
+        // Payload
+        // Payload Header
+        int payloadHeaderSize = readVarInt(cellBuffer);
+        int it = 0;
+        while (cellBuffer.position() < payloadHeaderSize && it < order) {
+//          int val = getSizeFromSerialType();
+
+        }
+      }
+    } else {
+      throw new IOException("Page size is less than required " + cellPointerArrayPosition);
+    }
+
     return List.of();
   }
 

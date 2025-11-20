@@ -59,18 +59,12 @@ public class QueryExecutor implements Executor {
       ) {
         String column = ((Identifier) items.getFirst().expr()).name();
         CreateStmt createStmt = (CreateStmt) this.sqlProcessor.process(table.getSqlStmt());
-        int columnOrder = -1;
         for (int i = 0; i < createStmt.columns().size(); i++) {
           if (column.contentEquals(createStmt.columns().get(i).name())) {
-            columnOrder = i;
+            table.getAllByColumn(createStmt.columns().get(i), i).forEach(System.out::println);
           }
         }
-        if (columnOrder == -1) {
-          throw new IllegalArgumentException("Column not found: " + column);
-        }
-        table.getAllByColumn(columnOrder).forEach(System.out::println);
       }
-
     } catch (IOException e) {
       System.out.println("Error reading file: " + e.getMessage());
     }
