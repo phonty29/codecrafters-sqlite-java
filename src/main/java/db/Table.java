@@ -68,13 +68,13 @@ public class Table {
   }
 
   public List<String> getAllByColumn(Column column, int order) throws IOException {
+    List<String> values = new ArrayList<>();
     int cellPointerArrayPosition = 8;
     if (Objects.nonNull(this.pageBuffer) && this.pageBuffer.limit() > cellPointerArrayPosition) {
       int rows = this.getRows();
       pageBuffer.position(cellPointerArrayPosition);
       ByteBuffer cellPointerArrayBuffer = pageBuffer.slice(pageBuffer.position(), 2 * rows);
       short[] offsets = new short[rows];
-      List<String> values = new ArrayList<>();
       for (int i = 0; i < rows; i++) {
         // The last table offset goes the first
         offsets[i] = cellPointerArrayBuffer.getShort();
@@ -93,27 +93,29 @@ public class Table {
         int it = 0;
         int[] sizes = new int[order];
         int currentPosition = cellBuffer.position();
-        while (cellBuffer.position() - currentPosition < payloadHeaderSize) {
-          int size= getSizeFromSerialType(readVarInt(cellBuffer));
+        // Until payloadHeaderSize - 1, because payload header is self included
+        while (cellBuffer.position() - currentPosition < payloadHeaderSize - 1) {
+          int size = getSizeFromSerialType(readVarInt(cellBuffer));
           if (it < order) {
             sizes[it++]= size;
           }
         }
-        // skip
+        System.out.println("Current position: " + cellBuffer.position());
+        // Skip
+        cellBuffer.position(cellBuffer.position());
         for (int j = 0; j < order-1; j++) {
-          cellBuffer.position(cellBuffer.position() + sizes[j]);
+          byte[] valueBytes = new byte[sizes[j]];
+          cellBuffer.get(valueBytes);
         }
         // Read value
-        cellBuffer.position(cellBuffer.position() - 1);
         byte[] valueBytes = new byte[sizes[order-1]];
         cellBuffer.get(valueBytes);
-        System.out.println(new String(valueBytes));
+        values.add(new String(valueBytes));
       }
     } else {
       throw new IOException("Page size is less than required " + cellPointerArrayPosition);
     }
-
-    return List.of();
+    return values;
   }
 
   public String getTableName() {
