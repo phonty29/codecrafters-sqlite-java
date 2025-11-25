@@ -5,13 +5,12 @@ import java.nio.ByteBuffer;
 public class BTreePage {
   private final PageHeader pageHeader;
   private final Cell[] cells;
-  private final static int CELL_POINTER_POSITIONS = 8;
 
   public BTreePage(ByteBuffer pageBuffer) {
     // Get the b-tree page type
     var bTreePageType = BTreePageType.valueOf(pageBuffer.get());
-    // Get cells count
-    var cellsCount = pageBuffer.position(103).getShort();
+    // Get cells count (skip 2 bytes)
+    var cellsCount = pageBuffer.position(pageBuffer.position() + 2).getShort();
     if (!bTreePageType.equals(BTreePageType.LEAF_TABLE)) {
       throw new IllegalArgumentException("Not supported page type: " + bTreePageType);
     }
@@ -19,7 +18,8 @@ public class BTreePage {
     this.pageHeader = new PageHeader(bTreePageType, cellsCount);
     // Initialize cells and fulfill
     this.cells = new Cell[cellsCount];
-    pageBuffer.position(CELL_POINTER_POSITIONS);
+    // Skip 3 bytes
+    pageBuffer.position(pageBuffer.position() + 3);
     ByteBuffer cellPointersBuffer = pageBuffer.slice(pageBuffer.position(), 2 * cellsCount);
     short[] offsets = new short[cellsCount];
     for (int i = 0; i < cellsCount; i++) {

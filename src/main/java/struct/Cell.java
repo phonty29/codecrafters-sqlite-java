@@ -21,15 +21,16 @@ public class Cell {
     List<Integer> serialTypes = new ArrayList<>();
     int payloadInitPosition = cellBuffer.position();
     while (cellBuffer.position() - payloadInitPosition < payloadHeaderSize - 1) {
-      serialTypes.add(getSizeFromSerialType(readVarInt(cellBuffer)));
+      int serialType = getSizeFromSerialType(readVarInt(cellBuffer));
+      serialTypes.add(serialType);
     }
     this.recordHeader = new RecordHeader(payloadHeaderSize, serialTypes);
     // Get values by serial type
-    List<byte[]> values = new ArrayList<>();
-    for (var serialType : serialTypes) {
-      byte[] valueBytes = new byte[serialType];
+    byte[][] values = new byte[serialTypes.size()][];
+    for (int i = 0; i < serialTypes.size(); i++) {
+      byte[] valueBytes = new byte[serialTypes.get(i)];
       cellBuffer.get(valueBytes);
-      values.add(valueBytes);
+      values[i] = valueBytes;
     }
     this.recordBody = new RecordBody(values);
   }
@@ -72,6 +73,6 @@ public class Cell {
   ) {}
 
   public record RecordBody(
-      List<byte[]> values
+      byte[][] values
   ) {}
 }

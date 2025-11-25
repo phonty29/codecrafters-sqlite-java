@@ -7,48 +7,23 @@ import java.util.List;
 import java.util.Objects;
 
 public class Table {
-
+  // Meta for Table
   private final String tableName;
   private final int rootPage;
   private final String sqlStmt;
+
+  private BTreePage tablePage;
   private ByteBuffer pageBuffer;
 
+  private final static int tableNameOrder = 2;
+  private final static int rootPageOrder = 3;
+  private final static int sqlStmtOrder = 4;
 
-  public Table(ByteBuffer cellBuffer) {
-    // Cell
-    int payloadSize = readVarInt(cellBuffer); //not used
-    int rowid = readVarInt(cellBuffer); // not used
-    // Payload
-    // Payload Header
-    int payloadHeaderSize = readVarInt(cellBuffer);
-    int typeSize = getSizeFromSerialType(readVarInt(cellBuffer));
-    int nameSize = getSizeFromSerialType(readVarInt(cellBuffer));
-    int tableNameSize = getSizeFromSerialType(readVarInt(cellBuffer));
-    int rootPageSize = getSizeFromSerialType(readVarInt(cellBuffer));
-    int sqlStmtSize = getSizeFromSerialType(readVarInt(cellBuffer));
-
-    // Record body starts here
-    // Skip sqlite_schema.type from body
-    byte[] typeBytes = new byte[typeSize];
-    cellBuffer.get(typeBytes);
-    // Skip sqlite_schema.name
-    byte[] nameBytes = new byte[nameSize];
-    cellBuffer.get(nameBytes);
-
-    // Get table name sqlite_schema.tbl_name
-    byte[] tableNameBytes = new byte[tableNameSize];
-    cellBuffer.get(tableNameBytes);
-    this.tableName = new String(tableNameBytes);
-
-    // Get rootpage
-    byte[] rootPageBytes = new byte[rootPageSize];
-    cellBuffer.get(rootPageBytes);
-    this.rootPage = getRootPage(rootPageBytes);
-
-    // Get SQL `create` statement
-    byte[] sqlStmtBytes = new byte[sqlStmtSize];
-    cellBuffer.get(sqlStmtBytes);
-    this.sqlStmt = new String(sqlStmtBytes);
+  public Table(Cell cell) {
+    byte[][] cellValues = cell.getRecordBody().values();
+    this.tableName = new String(cellValues[tableNameOrder]);
+    this.rootPage = getRootPage(cellValues[rootPageOrder]);
+    this.sqlStmt = new String(cellValues[sqlStmtOrder]);
   }
 
   public void setTablePageBuffer(ByteBuffer pageBuffer) {

@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 public class Database {
-
   private final FileInputStream databaseFile;
   private final FileChannel channel;
   private final int pageSize;
@@ -15,44 +14,28 @@ public class Database {
   private final Table[] tables;
   private ByteBuffer pageBuffer;
   private int currentPage = 1;
+  private BTreePage currentBTreePage;
 
   public Database(FileInputStream databaseFile) throws IOException {
     this.databaseFile = databaseFile;
     this.channel = databaseFile.getChannel();
+    // Read meta from database file headers (first 100 bytes)
     // Skip Magic numbers
     this.channel.position(16);
-
     // Get page size
     ByteBuffer pageSizeBuffer = ByteBuffer.allocate(2);
     channel.read(pageSizeBuffer);
     this.pageSize = Short.toUnsignedInt(pageSizeBuffer.clear().getShort());
-    setCurrentPage(this.currentPage);
+    this.setCurrentPage(this.currentPage, 100);
 
-    pageBuffer.position(100);
-    // Get the b-tree page type
-    this.bTreePageType = BTreePageType.valueOf(pageBuffer.get());
-
-    // Get number of cells in sqlite_schema
-    this.numberOfTables = pageBuffer.position(103).getShort();
-
-    // Set position to after the "number of cells on the page"
-    pageBuffer.position(105);
-    int cellHeaderTailLength = 3;
-    pageBuffer.position(pageBuffer.position() + cellHeaderTailLength);
-    // Slice Cell Pointer Array as buffer
-    ByteBuffer cellPointerArrayBuffer = pageBuffer.slice(pageBuffer.position(), 2 * numberOfTables);
+    this.bTreePageType = this.currentBTreePage.getPageHeader().getPageType();
+    this.numberOfTables = this.currentBTreePage.getPageHeader().getCellsCount();
 
     // Initialize tables
     this.tables = new Table[numberOfTables];
-    short[] offsets = new short[numberOfTables];
-    for (int i = 0; i < numberOfTables; i++) {
-      // The last table offset goes the first
-      offsets[i] = cellPointerArrayBuffer.getShort();
-      if (i == 0) {
-        tables[i] = new Table(pageBuffer.position(offsets[i]).slice());
-      } else {
-        tables[i] = new Table(pageBuffer.slice(offsets[i], offsets[i - 1] - offsets[i]));
-      }
+    var tableCells = this.currentBTreePage.getCells();
+    for (int i = 0; i < tableCells.length; i++) {
+      tables[i] = new Table(tableCells[i]);
     }
   }
 
@@ -68,11 +51,12 @@ public class Database {
     return this.tables;
   }
 
-  public void setCurrentPage(int page) throws IOException {
+  public void setCurrentPage(int rootPage, int offset) throws IOException {
     // Copy page to buffer
-    this.currentPage = page;
+    this.currentPage = rootPage;
     this.pageBuffer = ByteBuffer.allocate(this.pageSize);
-    this.channel.position((long) (this.currentPage - 1) * this.pageSize).read(pageBuffer);
+    this.channel.position((long) (rootPage - 1) * this.pageSize).read(pageBuffer);
+    this.currentBTreePage = new BTreePage(pageBuffer.duplicate().position(offset));
   }
 
   public ByteBuffer getCurrentPageBuffer() {

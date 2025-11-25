@@ -35,7 +35,7 @@ public class QueryExecutor implements Executor {
           .findFirst()
           .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
 
-      database.setCurrentPage(table.getRootPage());
+      database.setCurrentPage(table.getRootPage(), 0);
       ByteBuffer pageBuffer = database.getCurrentPageBuffer();
       table.setTablePageBuffer(pageBuffer);
 
