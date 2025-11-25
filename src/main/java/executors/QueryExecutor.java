@@ -4,7 +4,6 @@ import struct.Database;
 import struct.Table;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import query_processor.SqlProcessor;
@@ -35,9 +34,7 @@ public class QueryExecutor implements Executor {
           .findFirst()
           .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
 
-      database.setCurrentPage(table.getRootPage(), 0);
-      ByteBuffer pageBuffer = database.getCurrentPageBuffer();
-      table.setTablePageBuffer(pageBuffer);
+      database.navigateToTable(table);
 
       List<SelectItem> items = this.queryTree.selectList();
       // select count(*) from table;
@@ -56,7 +53,7 @@ public class QueryExecutor implements Executor {
         CreateStmt createStmt = (CreateStmt) this.sqlProcessor.process(table.getSqlStmt());
         for (int i = 0; i < createStmt.columns().size(); i++) {
           if (column.contentEquals(createStmt.columns().get(i).name())) {
-            table.getAllByColumn(i+1).forEach(System.out::println);
+            table.getByColumn(i).forEach(System.out::println);
           }
         }
       }

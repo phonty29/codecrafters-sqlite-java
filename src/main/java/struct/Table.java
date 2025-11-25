@@ -3,8 +3,10 @@ package struct;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import struct.Cell.RecordBody;
 
 public class Table {
   // Meta for Table
@@ -20,10 +22,15 @@ public class Table {
   private final static int sqlStmtOrder = 4;
 
   public Table(Cell cell) {
+    // Get meta from sqlite_schema cells
     byte[][] cellValues = cell.getRecordBody().values();
     this.tableName = new String(cellValues[tableNameOrder]);
     this.rootPage = getRootPage(cellValues[rootPageOrder]);
     this.sqlStmt = new String(cellValues[sqlStmtOrder]);
+  }
+
+  public void setTablePage(BTreePage tablePage) {
+    this.tablePage = tablePage;
   }
 
   public void setTablePageBuffer(ByteBuffer pageBuffer) {
@@ -31,12 +38,13 @@ public class Table {
   }
 
   public int getRows() throws IOException {
-    int rowsPosition = 3;
-    if (Objects.nonNull(this.pageBuffer) && this.pageBuffer.limit() > rowsPosition) {
-      return Short.toUnsignedInt(this.pageBuffer.position(rowsPosition).getShort());
-    } else {
-      throw new IOException("Page size is less than required " + rowsPosition);
-    }
+    return this.tablePage.getPageHeader().getCellsCount();
+  }
+
+  // REFACTOR! Types depend on column type in this.sqlStmt
+  public List<String> getByColumn(int column) throws IOException {
+    return Arrays.stream(this.tablePage.getCells()).map(Cell::getRecordBody)
+        .map(recordBody -> new String(recordBody.values()[column])).toList();
   }
 
   public List<String> getAllByColumn(int order) throws IOException {

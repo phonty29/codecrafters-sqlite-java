@@ -51,8 +51,17 @@ public class Database {
     return this.tables;
   }
 
+  public void navigateToTable(Table table) throws IOException {
+    this.currentPage = table.getRootPage();
+    this.pageBuffer = ByteBuffer.allocate(this.pageSize);
+    this.channel.position((long) (table.getRootPage() - 1) * this.pageSize).read(pageBuffer);
+    this.currentBTreePage = new BTreePage(pageBuffer.duplicate().position(0));
+    table.setTablePage(currentBTreePage);
+//    table.setTablePageBuffer(pageBuffer);
+  }
+
   public void setCurrentPage(int rootPage, int offset) throws IOException {
-    // Copy page to buffer
+    // Copy page to buffer, then update b-tree page
     this.currentPage = rootPage;
     this.pageBuffer = ByteBuffer.allocate(this.pageSize);
     this.channel.position((long) (rootPage - 1) * this.pageSize).read(pageBuffer);
@@ -65,5 +74,9 @@ public class Database {
 
   public BTreePageType getBTreePageType() {
     return this.bTreePageType;
+  }
+
+  public BTreePage getCurrentBTreePage() {
+    return this.currentBTreePage;
   }
 }
