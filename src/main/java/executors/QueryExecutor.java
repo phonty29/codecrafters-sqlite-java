@@ -31,7 +31,7 @@ public class QueryExecutor implements Executor {
 
       String tableName = ((TableRef) this.queryTree.from()).name();
       Table table = Arrays.stream(database.getTables())
-          .filter(t -> t.getTableName().contains(tableName))
+          .filter(t -> t.meta().name().contains(tableName))
           .findFirst()
           .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
 
@@ -51,7 +51,7 @@ public class QueryExecutor implements Executor {
           items.getFirst().expr() instanceof Identifier
       ) {
         String column = ((Identifier) items.getFirst().expr()).name();
-        CreateStmt createStmt = (CreateStmt) this.sqlProcessor.process(table.getSqlStmt());
+        CreateStmt createStmt = (CreateStmt) this.sqlProcessor.process(table.meta().sqlStmt());
         for (int i = 0; i < createStmt.columns().size(); i++) {
           if (column.contentEquals(createStmt.columns().get(i).name())) {
             table.getByColumn(i).forEach(System.out::println);

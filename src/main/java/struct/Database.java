@@ -7,18 +7,12 @@ import java.nio.channels.FileChannel;
 
 public class Database {
 
-  private final FileInputStream databaseFile;
   private final FileChannel channel;
   private final int pageSize;
-  private final int numberOfTables;
-  private final BTreePageType bTreePageType;
   private final Table[] tables;
-  private ByteBuffer pageBuffer;
-  private int currentPage = 1;
-  private BTreePage currentBTreePage;
+  private final BTreePage bTreePage;
 
   public Database(FileInputStream databaseFile) throws IOException {
-    this.databaseFile = databaseFile;
     this.channel = databaseFile.getChannel();
     // Read meta from database file headers (first 100 bytes)
     // Skip Magic numbers
@@ -27,21 +21,22 @@ public class Database {
     ByteBuffer pageSizeBuffer = ByteBuffer.allocate(2);
     channel.read(pageSizeBuffer);
     this.pageSize = Short.toUnsignedInt(pageSizeBuffer.clear().getShort());
-    this.setCurrentPage(this.currentPage, 100);
-
-    this.bTreePageType = this.currentBTreePage.getPageHeader().pageType();
-    this.numberOfTables = this.currentBTreePage.getPageHeader().cellsCount();
+    // Copy page to buffer, then update b-tree page
+    ByteBuffer pageBuffer = ByteBuffer.allocate(this.pageSize);
+    this.channel.position(0).read(pageBuffer);
+    this.bTreePage = new BTreePage(pageBuffer.position(100));
 
     // Initialize tables
+    int numberOfTables = this.bTreePage.getPageHeader().cellsCount();
     this.tables = new Table[numberOfTables];
-    var tableCells = this.currentBTreePage.getCells();
+    Cell[] tableCells = this.bTreePage.getCells();
     for (int i = 0; i < tableCells.length; i++) {
       tables[i] = new Table(tableCells[i]);
     }
   }
 
   public int getNumberOfTables() {
-    return this.numberOfTables;
+    return this.bTreePage.getPageHeader().cellsCount();
   }
 
   public int getPageSize() {
@@ -53,30 +48,9 @@ public class Database {
   }
 
   public void navigateToTable(Table table) throws IOException {
-    this.currentPage = table.getRootPage();
-    this.pageBuffer = ByteBuffer.allocate(this.pageSize);
-    this.channel.position((long) (table.getRootPage() - 1) * this.pageSize).read(pageBuffer);
-    this.currentBTreePage = new BTreePage(pageBuffer.duplicate().position(0));
-    table.setTablePage(currentBTreePage);
-  }
-
-  public void setCurrentPage(int rootPage, int offset) throws IOException {
-    // Copy page to buffer, then update b-tree page
-    this.currentPage = rootPage;
-    this.pageBuffer = ByteBuffer.allocate(this.pageSize);
-    this.channel.position((long) (rootPage - 1) * this.pageSize).read(pageBuffer);
-    this.currentBTreePage = new BTreePage(pageBuffer.duplicate().position(offset));
-  }
-
-  public ByteBuffer getCurrentPageBuffer() {
-    return this.pageBuffer.duplicate().clear();
-  }
-
-  public BTreePageType getBTreePageType() {
-    return this.bTreePageType;
-  }
-
-  public BTreePage getCurrentBTreePage() {
-    return this.currentBTreePage;
+    ByteBuffer tablePageBuffer = ByteBuffer.allocate(this.pageSize);
+    this.channel.position((long) (table.meta().rootPage() - 1) * this.pageSize)
+        .read(tablePageBuffer);
+    table.setTablePage(new BTreePage(tablePageBuffer.duplicate().clear()));
   }
 }

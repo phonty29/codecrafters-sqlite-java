@@ -7,11 +7,7 @@ import java.util.List;
 
 public class Table {
 
-  // Meta for Table
-  private final String tableName;
-  private final int rootPage;
-  private final String sqlStmt;
-
+  private final Meta meta;
   private BTreePage tablePage;
 
 
@@ -21,9 +17,10 @@ public class Table {
     int rootPageOrder = 3;
     int sqlStmtOrder = 4;
     byte[][] cellValues = cell.getRecordBody().values();
-    this.tableName = new String(cellValues[tableNameOrder]);
-    this.rootPage = getRootPage(cellValues[rootPageOrder]);
-    this.sqlStmt = new String(cellValues[sqlStmtOrder]);
+    String tableName = new String(cellValues[tableNameOrder]);
+    int rootPage = getRootPage(cellValues[rootPageOrder]);
+    String sqlStmt = new String(cellValues[sqlStmtOrder]);
+    this.meta = new Meta(tableName, rootPage, sqlStmt);
   }
 
   public void setTablePage(BTreePage tablePage) {
@@ -40,16 +37,8 @@ public class Table {
         .map(recordBody -> new String(recordBody.values()[column])).toList();
   }
 
-  public String getTableName() {
-    return this.tableName;
-  }
-
-  public int getRootPage() {
-    return this.rootPage;
-  }
-
-  public String getSqlStmt() {
-    return this.sqlStmt;
+  public Meta meta() {
+    return this.meta;
   }
 
   private int getRootPage(byte[] rootPageBytes) {
@@ -59,5 +48,13 @@ public class Table {
       case 4 -> ByteBuffer.wrap(rootPageBytes).getInt();
       default -> throw new IllegalStateException("Rootpage couldn't be cast to integer type");
     };
+  }
+
+  public record Meta(
+      String name,
+      int rootPage,
+      String sqlStmt
+  ) {
+
   }
 }
