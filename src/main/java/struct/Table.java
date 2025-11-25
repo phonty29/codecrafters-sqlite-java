@@ -98,7 +98,6 @@ public class Table {
           }
         }
         // Skip
-        cellBuffer.position(cellBuffer.position());
         for (int j = 0; j < order-1; j++) {
           byte[] valueBytes = new byte[sizes[j]];
           cellBuffer.get(valueBytes);

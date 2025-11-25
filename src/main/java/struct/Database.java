@@ -28,8 +28,8 @@ public class Database {
     this.pageSize = Short.toUnsignedInt(pageSizeBuffer.clear().getShort());
     setCurrentPage(this.currentPage);
 
-    // Get the b-tree page type
     pageBuffer.position(100);
+    // Get the b-tree page type
     this.bTreePageType = BTreePageType.valueOf(pageBuffer.get());
 
     // Get number of cells in sqlite_schema
