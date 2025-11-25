@@ -5,4 +5,6 @@ import java.util.List;
 public record CreateStmt(
     String tableName,
     List<Column> columns
-) implements Statement {}
+) implements Statement {
+
+}

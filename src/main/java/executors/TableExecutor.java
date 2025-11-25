@@ -1,10 +1,10 @@
 package executors;
 
-import struct.Database;
-import struct.Table;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import struct.Database;
+import struct.Table;
 
 public class TableExecutor implements Executor {
 

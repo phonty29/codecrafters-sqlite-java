@@ -6,7 +6,7 @@ public enum BTreePageType {
   LEAF_INDEX((byte) 10),
   LEAF_TABLE((byte) 13);
 
-  private byte bTreePageType;
+  private final byte bTreePageType;
 
   BTreePageType(byte type) {
     this.bTreePageType = type;

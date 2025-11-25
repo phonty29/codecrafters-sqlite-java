@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Cell {
+
   private final int recordSize;
   private final int rowId;
   private final RecordHeader recordHeader;
@@ -70,9 +71,13 @@ public class Cell {
   public record RecordHeader(
       int payloadHeaderSize,
       List<Integer> serialTypes
-  ) {}
+  ) {
+
+  }
 
   public record RecordBody(
       byte[][] values
-  ) {}
+  ) {
+
+  }
 }

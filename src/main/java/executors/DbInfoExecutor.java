@@ -1,8 +1,8 @@
 package executors;
 
-import struct.Database;
 import java.io.FileInputStream;
 import java.io.IOException;
+import struct.Database;
 
 public class DbInfoExecutor implements Executor {
 

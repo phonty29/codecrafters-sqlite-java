@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 public class Database {
+
   private final FileInputStream databaseFile;
   private final FileChannel channel;
   private final int pageSize;
@@ -28,8 +29,8 @@ public class Database {
     this.pageSize = Short.toUnsignedInt(pageSizeBuffer.clear().getShort());
     this.setCurrentPage(this.currentPage, 100);
 
-    this.bTreePageType = this.currentBTreePage.getPageHeader().getPageType();
-    this.numberOfTables = this.currentBTreePage.getPageHeader().getCellsCount();
+    this.bTreePageType = this.currentBTreePage.getPageHeader().pageType();
+    this.numberOfTables = this.currentBTreePage.getPageHeader().cellsCount();
 
     // Initialize tables
     this.tables = new Table[numberOfTables];
@@ -57,7 +58,6 @@ public class Database {
     this.channel.position((long) (table.getRootPage() - 1) * this.pageSize).read(pageBuffer);
     this.currentBTreePage = new BTreePage(pageBuffer.duplicate().position(0));
     table.setTablePage(currentBTreePage);
-//    table.setTablePageBuffer(pageBuffer);
   }
 
   public void setCurrentPage(int rootPage, int offset) throws IOException {

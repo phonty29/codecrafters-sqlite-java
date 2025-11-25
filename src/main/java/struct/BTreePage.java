@@ -3,6 +3,7 @@ package struct;
 import java.nio.ByteBuffer;
 
 public class BTreePage {
+
   private final PageHeader pageHeader;
   private final Cell[] cells;
 
@@ -42,5 +43,9 @@ public class BTreePage {
 
   public Cell[] getCells() {
     return this.cells;
+  }
+
+  public record PageHeader(BTreePageType pageType, int cellsCount) {
+
   }
 }

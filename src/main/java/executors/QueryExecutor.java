@@ -1,7 +1,5 @@
 package executors;
 
-import struct.Database;
-import struct.Table;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -13,8 +11,11 @@ import query_processor.parser.ast.Identifier;
 import query_processor.parser.ast.SelectItem;
 import query_processor.parser.ast.SelectStmt;
 import query_processor.parser.ast.TableRef;
+import struct.Database;
+import struct.Table;
 
 public class QueryExecutor implements Executor {
+
   private final SqlProcessor sqlProcessor;
   private final SelectStmt queryTree;
 

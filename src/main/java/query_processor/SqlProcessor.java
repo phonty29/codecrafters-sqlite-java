@@ -7,6 +7,7 @@ import query_processor.parser.SqlParser;
 import query_processor.parser.ast.Statement;
 
 public class SqlProcessor {
+
   public Statement process(String query) {
     SqlLexer lexer = new SqlLexer(query);
     List<Token> tokens = lexer.tokenize();
