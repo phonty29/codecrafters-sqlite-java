@@ -65,7 +65,7 @@ public class Table {
     }
   }
 
-  public List<String> getAllByColumn(Column column, int order) throws IOException {
+  public List<String> getAllByColumn(int order) throws IOException {
     List<String> values = new ArrayList<>();
     int cellPointerArrayPosition = 8;
     if (Objects.nonNull(this.pageBuffer) && this.pageBuffer.limit() > cellPointerArrayPosition) {

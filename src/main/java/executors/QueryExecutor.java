@@ -56,7 +56,7 @@ public class QueryExecutor implements Executor {
         CreateStmt createStmt = (CreateStmt) this.sqlProcessor.process(table.getSqlStmt());
         for (int i = 0; i < createStmt.columns().size(); i++) {
           if (column.contentEquals(createStmt.columns().get(i).name())) {
-            table.getAllByColumn(createStmt.columns().get(i), i+1).forEach(System.out::println);
+            table.getAllByColumn(i+1).forEach(System.out::println);
           }
         }
       }
