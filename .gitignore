@@ -1,5 +1,5 @@
 # Database files used for testing
-*.db
+*.struct
 
 *.jar
 target/

@@ -1,7 +1,7 @@
 package executors;
 
-import db.Database;
-import db.Table;
+import struct.Database;
+import struct.Table;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;

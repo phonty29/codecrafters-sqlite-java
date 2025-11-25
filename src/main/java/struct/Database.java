@@ -1,4 +1,4 @@
-package db;
+package struct;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -11,7 +11,7 @@ public class Database {
   private final FileChannel channel;
   private final int pageSize;
   private final int numberOfTables;
-  private final byte bTreePageType;
+  private final BTreePageType bTreePageType;
   private final Table[] tables;
   private ByteBuffer pageBuffer;
   private int currentPage = 1;
@@ -30,7 +30,7 @@ public class Database {
 
     // Get the b-tree page type
     pageBuffer.position(100);
-    this.bTreePageType = pageBuffer.get();
+    this.bTreePageType = BTreePageType.valueOf(pageBuffer.get());
 
     // Get number of cells in sqlite_schema
     this.numberOfTables = pageBuffer.position(103).getShort();
@@ -68,10 +68,6 @@ public class Database {
     return this.tables;
   }
 
-  public FileInputStream getFile() {
-    return this.databaseFile;
-  }
-
   public void setCurrentPage(int page) throws IOException {
     // Copy page to buffer
     this.currentPage = page;
@@ -83,7 +79,7 @@ public class Database {
     return this.pageBuffer.duplicate().clear();
   }
 
-  public byte getBTreePageType() {
+  public BTreePageType getBTreePageType() {
     return this.bTreePageType;
   }
 }

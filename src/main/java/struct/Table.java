@@ -1,11 +1,10 @@
-package db;
+package struct;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import query_processor.parser.ast.Column;
 
 public class Table {
 
@@ -17,8 +16,8 @@ public class Table {
 
   public Table(ByteBuffer cellBuffer) {
     // Cell
-    int payloadSize = readVarInt(cellBuffer);
-    int rowid = readVarInt(cellBuffer);
+    int payloadSize = readVarInt(cellBuffer); //not used
+    int rowid = readVarInt(cellBuffer); // not used
     // Payload
     // Payload Header
     int payloadHeaderSize = readVarInt(cellBuffer);
@@ -143,28 +142,6 @@ public class Table {
       case 4 -> ByteBuffer.wrap(rootPageBytes).getInt();
       default -> throw new IllegalStateException("Rootpage couldn't be cast to integer type");
     };
-  }
-
-  private int readVarInt(byte[] data) {
-    int value = 0;
-
-    for (int i = 0; i < 9; i++) {
-      int b = data[i] & 0xFF;
-
-      // For the first 8 bytes:
-      if (i < 8) {
-        value = (value << 7) | (b & 0x7F);
-        if ((b & 0x80) == 0) {
-          // MSB is 0 => last byte
-          return value;
-        }
-      } else {
-        // 9th byte: uses all 8 bits
-        value = (value << 8) | b;
-        return value;
-      }
-    }
-    throw new IllegalArgumentException("Value too large for unsigned varint");
   }
 
   // Warning! This method has side effects. Refactor it to immutability of cellBuffer

@@ -1,6 +1,6 @@
 package executors;
 
-import db.Database;
+import struct.Database;
 import java.io.FileInputStream;
 import java.io.IOException;
 

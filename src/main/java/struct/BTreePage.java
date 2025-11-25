@@ -1,4 +1,4 @@
-package db;
+package struct;
 
 public class BTreePage {
 
