@@ -7,18 +7,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import processor.SqlProcessor;
-import processor.lexer.SqlLexer;
-import processor.lexer.Token;
-import processor.parser.SqlParser;
-import processor.parser.ast.CreateStmt;
-import processor.parser.ast.FunctionCall;
-import processor.parser.ast.Identifier;
-import processor.parser.ast.SelectItem;
-import processor.parser.ast.SelectStmt;
-import processor.parser.ast.TableRef;
+import query_processor.SqlProcessor;
+import query_processor.parser.ast.CreateStmt;
+import query_processor.parser.ast.FunctionCall;
+import query_processor.parser.ast.Identifier;
+import query_processor.parser.ast.SelectItem;
+import query_processor.parser.ast.SelectStmt;
+import query_processor.parser.ast.TableRef;
 
 public class QueryExecutor implements Executor {
   private final SqlProcessor sqlProcessor;

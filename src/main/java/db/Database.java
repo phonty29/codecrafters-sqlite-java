@@ -82,4 +82,8 @@ public class Database {
   public ByteBuffer getCurrentPageBuffer() {
     return this.pageBuffer.duplicate().clear();
   }
+
+  public byte getBTreePageType() {
+    return this.bTreePageType;
+  }
 }

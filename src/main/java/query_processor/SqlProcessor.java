@@ -1,10 +1,10 @@
-package processor;
+package query_processor;
 
 import java.util.List;
-import processor.lexer.SqlLexer;
-import processor.lexer.Token;
-import processor.parser.SqlParser;
-import processor.parser.ast.Statement;
+import query_processor.lexer.SqlLexer;
+import query_processor.lexer.Token;
+import query_processor.parser.SqlParser;
+import query_processor.parser.ast.Statement;
 
 public class SqlProcessor {
   public Statement process(String query) {

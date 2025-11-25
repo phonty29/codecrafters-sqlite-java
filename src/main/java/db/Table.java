@@ -3,11 +3,9 @@ package db;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import processor.parser.ast.Column;
-import processor.parser.ast.ColumnType;
+import query_processor.parser.ast.Column;
 
 public class Table {
 
@@ -100,7 +98,6 @@ public class Table {
             sizes[it++]= size;
           }
         }
-        System.out.println("Current position: " + cellBuffer.position());
         // Skip
         cellBuffer.position(cellBuffer.position());
         for (int j = 0; j < order-1; j++) {

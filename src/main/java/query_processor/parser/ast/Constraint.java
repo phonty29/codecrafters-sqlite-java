@@ -1,4 +1,4 @@
-package processor.parser.ast;
+package query_processor.parser.ast;
 
 public record Constraint(
     String value,

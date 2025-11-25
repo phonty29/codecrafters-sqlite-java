@@ -1,4 +1,4 @@
-package processor.lexer;
+package query_processor.lexer;
 
 public enum TokenType {
   IDENT,

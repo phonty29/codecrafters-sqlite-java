@@ -1,27 +1,27 @@
-package processor.parser;
+package query_processor.parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import processor.lexer.Token;
-import processor.lexer.TokenType;
-import processor.parser.ast.BinaryOp;
-import processor.parser.ast.Column;
-import processor.parser.ast.ColumnType;
-import processor.parser.ast.Constraint;
-import processor.parser.ast.CreateStmt;
-import processor.parser.ast.Expression;
-import processor.parser.ast.FromItem;
-import processor.parser.ast.FunctionCall;
-import processor.parser.ast.Identifier;
-import processor.parser.ast.Literal;
-import processor.parser.ast.OrderItem;
-import processor.parser.ast.SelectItem;
-import processor.parser.ast.SelectStmt;
-import processor.parser.ast.SubqueryRef;
-import processor.parser.ast.TableRef;
-import processor.parser.ast.UnaryOp;
+import query_processor.lexer.Token;
+import query_processor.lexer.TokenType;
+import query_processor.parser.ast.BinaryOp;
+import query_processor.parser.ast.Column;
+import query_processor.parser.ast.ColumnType;
+import query_processor.parser.ast.Constraint;
+import query_processor.parser.ast.CreateStmt;
+import query_processor.parser.ast.Expression;
+import query_processor.parser.ast.FromItem;
+import query_processor.parser.ast.FunctionCall;
+import query_processor.parser.ast.Identifier;
+import query_processor.parser.ast.Literal;
+import query_processor.parser.ast.OrderItem;
+import query_processor.parser.ast.SelectItem;
+import query_processor.parser.ast.SelectStmt;
+import query_processor.parser.ast.SubqueryRef;
+import query_processor.parser.ast.TableRef;
+import query_processor.parser.ast.UnaryOp;
 
 public class SqlParser {
 
