@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import query_processor.SqlProcessor;
+import query_processor.parser.ast.Column;
 import query_processor.parser.ast.CreateStmt;
 import query_processor.parser.ast.FunctionCall;
 import query_processor.parser.ast.Identifier;
@@ -46,17 +47,31 @@ public class QueryExecutor implements Executor {
         System.out.println(table.getRows());
       }
 
-      // select [columnName] from [tableName];
-      if (items.size() == 1 &&
-          items.getFirst().expr() instanceof Identifier
-      ) {
-        String column = ((Identifier) items.getFirst().expr()).name();
-        CreateStmt createStmt = (CreateStmt) this.sqlProcessor.process(table.meta().sqlStmt());
-        for (int i = 0; i < createStmt.columns().size(); i++) {
-          if (column.contentEquals(createStmt.columns().get(i).name())) {
-            table.getByColumn(i).forEach(System.out::println);
+      // select [columnName, ...] from [tableName];
+      if (!items.isEmpty() && items.getFirst().expr() instanceof Identifier) {
+        List<String> queriedColumns = items
+            .stream()
+            .map(i -> ((Identifier) i.expr()).name())
+            .toList();
+
+        List<String> orderedColumns = ((CreateStmt) this.sqlProcessor.process(table.meta().sqlStmt()))
+            .columns()
+            .stream()
+            .map(Column::name)
+            .toList();
+
+        // orderedColumns: [color, size, name, weight]
+        // queriedColumns: [name, color]
+        // columnOrders: [2,0]
+        int[] columnOrders = new int[queriedColumns.size()];
+        int colIdx = 0;
+        for (String queriedColumn : queriedColumns) {
+          int idx = orderedColumns.indexOf(queriedColumn);
+          if (idx != -1) {
+            columnOrders[colIdx++] = idx;
           }
         }
+        table.getByColumns(columnOrders).forEach(System.out::println);
       }
     } catch (IOException e) {
       System.out.println("Error reading file: " + e.getMessage());

@@ -37,6 +37,23 @@ public class Table {
         .map(recordBody -> new String(recordBody.values()[column])).toList();
   }
 
+  // REFACTOR! Types depend on column type in this.sqlStmt
+  public List<String> getByColumns(int[] columns) throws IOException {
+    return Arrays.stream(this.tablePage.getCells()).map(Cell::getRecordBody)
+        .map(recordBody -> {
+          String value = "";
+          for (int i = 0; i < columns.length; i++) {
+            if (i > 0) {
+              value += "|" + new String(recordBody.values()[columns[i]]);
+            } else {
+              value += new String(recordBody.values()[columns[i]]);
+            }
+          }
+          return value;
+        })
+        .toList();
+  }
+
   public Meta meta() {
     return this.meta;
   }

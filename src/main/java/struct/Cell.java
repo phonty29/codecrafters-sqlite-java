@@ -53,7 +53,7 @@ public class Cell {
     return serialType;
   }
 
-  // Warning! This method has side effects. Refactor it to immutability of cellBuffer
+  // REFACTOR! This method has side effects. Turn it to immutability of cellBuffer
   private int readVarInt(ByteBuffer cellBuffer) {
     int result = 0;
     for (int i = 0; i < 8; i++) {
