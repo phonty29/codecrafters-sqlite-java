@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 public class Table {
 
@@ -31,26 +33,20 @@ public class Table {
     return this.tablePage.getPageHeader().cellsCount();
   }
 
-  // REFACTOR! Types depend on column type in this.sqlStmt
-  public List<String> getByColumn(int column) throws IOException {
-    return Arrays.stream(this.tablePage.getCells()).map(Cell::getRecordBody)
-        .map(recordBody -> new String(recordBody.values()[column])).toList();
-  }
-
-  // REFACTOR! Types depend on column type in this.sqlStmt
+  /**
+   * REFACTOR! Types depend on column type in this.sqlStmt
+   * @param columns - the order of columns in the table b-tree page structure
+   * @return list of values from cells (not typed!)
+   * @throws IOException
+   */
   public List<String> getByColumns(int[] columns) throws IOException {
-    return Arrays.stream(this.tablePage.getCells()).map(Cell::getRecordBody)
-        .map(recordBody -> {
-          String value = "";
-          for (int i = 0; i < columns.length; i++) {
-            if (i > 0) {
-              value += "|" + new String(recordBody.values()[columns[i]]);
-            } else {
-              value += new String(recordBody.values()[columns[i]]);
-            }
-          }
-          return value;
-        })
+    return Arrays.stream(this.tablePage.getCells())
+        .map(Cell::getRecordBody)
+        .map(recordBody ->
+            Arrays.stream(columns)
+                .mapToObj(col -> new String(recordBody.values()[col]))
+                .collect(Collectors.joining("|"))
+        )
         .toList();
   }
 

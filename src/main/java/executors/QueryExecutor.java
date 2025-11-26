@@ -60,9 +60,6 @@ public class QueryExecutor implements Executor {
             .map(Column::name)
             .toList();
 
-        // orderedColumns: [color, size, name, weight]
-        // queriedColumns: [name, color]
-        // columnOrders: [2,0]
         int[] columnOrders = new int[queriedColumns.size()];
         int colIdx = 0;
         for (String queriedColumn : queriedColumns) {
