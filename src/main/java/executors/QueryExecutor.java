@@ -54,7 +54,8 @@ public class QueryExecutor implements Executor {
             .map(i -> ((Identifier) i.expr()).name())
             .toList();
 
-        List<String> orderedColumns = ((CreateStmt) this.sqlProcessor.process(table.meta().sqlStmt()))
+        List<String> orderedColumns = ((CreateStmt) this.sqlProcessor.process(
+            table.meta().sqlStmt()))
             .columns()
             .stream()
             .map(Column::name)

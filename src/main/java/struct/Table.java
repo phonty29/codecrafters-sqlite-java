@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 public class Table {
@@ -35,6 +34,7 @@ public class Table {
 
   /**
    * REFACTOR! Types depend on column type in this.sqlStmt
+   *
    * @param columns - the order of columns in the table b-tree page structure
    * @return list of values from cells (not typed!)
    * @throws IOException
