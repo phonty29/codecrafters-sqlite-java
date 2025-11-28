@@ -3,9 +3,13 @@ package executors;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import query_processor.SqlProcessor;
 import query_processor.parser.ast.Column;
+import query_processor.parser.ast.ColumnType;
 import query_processor.parser.ast.CreateStmt;
 import query_processor.parser.ast.FunctionCall;
 import query_processor.parser.ast.Identifier;
@@ -53,23 +57,7 @@ public class QueryExecutor implements Executor {
             .stream()
             .map(i -> ((Identifier) i.expr()).name())
             .toList();
-
-        List<String> orderedColumns = ((CreateStmt) this.sqlProcessor.process(
-            table.meta().sqlStmt()))
-            .columns()
-            .stream()
-            .map(Column::name)
-            .toList();
-
-        int[] columnOrders = new int[queriedColumns.size()];
-        int colIdx = 0;
-        for (String queriedColumn : queriedColumns) {
-          int idx = orderedColumns.indexOf(queriedColumn);
-          if (idx != -1) {
-            columnOrders[colIdx++] = idx;
-          }
-        }
-        table.getByColumns(columnOrders).forEach(System.out::println);
+        table.getByColumns(queriedColumns).forEach(System.out::println);
       }
     } catch (IOException e) {
       System.out.println("Error reading file: " + e.getMessage());

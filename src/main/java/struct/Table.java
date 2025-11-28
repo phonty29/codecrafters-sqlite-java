@@ -4,7 +4,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import query_processor.SqlProcessor;
+import query_processor.parser.ast.Column;
+import query_processor.parser.ast.ColumnType;
+import query_processor.parser.ast.CreateStmt;
 
 public class Table {
 
@@ -32,6 +37,34 @@ public class Table {
     return this.tablePage.getPageHeader().cellsCount();
   }
 
+  public List<String> getByColumns(List<String> queriedColumns) throws IOException {
+    List<String> orderedColumns =
+        ((CreateStmt) new SqlProcessor().process(
+            this.meta().sqlStmt()))
+            .columns()
+            .stream()
+            .map(Column::name)
+            .toList();
+
+//    Map<String, ColumnType> orderedColumnsMap =
+//        ((CreateStmt) new SqlProcessor().process(
+//            this.meta().sqlStmt()))
+//            .columns()
+//            .stream()
+//            .collect(Collectors.toMap(Column::name, Column::type));
+//    System.out.println("ordered columns map: " + orderedColumnsMap);
+
+    int[] columnOrders = new int[queriedColumns.size()];
+    int colIdx = 0;
+    for (String queriedColumn : queriedColumns) {
+      int idx = orderedColumns.indexOf(queriedColumn);
+      if (idx != -1) {
+        columnOrders[colIdx++] = idx;
+      }
+    }
+    return this.getByColumns(columnOrders);
+  }
+
   /**
    * REFACTOR! Types depend on column type in this.sqlStmt
    *
@@ -39,7 +72,7 @@ public class Table {
    * @return list of values from cells (not typed!)
    * @throws IOException
    */
-  public List<String> getByColumns(int[] columns) throws IOException {
+  private List<String> getByColumns(int[] columns) throws IOException {
     return Arrays.stream(this.tablePage.getCells())
         .map(Cell::getRecordBody)
         .map(recordBody ->
