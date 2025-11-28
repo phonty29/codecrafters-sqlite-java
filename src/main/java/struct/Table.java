@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import query_processor.SqlProcessor;
 import query_processor.parser.ast.Column;
+import utils.ByteUtils;
 
 public class Table {
 
@@ -54,8 +55,6 @@ public class Table {
   }
 
   /**
-   * REFACTOR! Proper retrieve for types INTEGER, REAL. Now it doesn't count the size
-   *
    * @param columns - the order of columns in the table b-tree page structure
    * @return list of values from cells (not typed!)
    */
@@ -67,8 +66,10 @@ public class Table {
                 .mapToObj(col -> switch (this.columns[col].type()) {
                   case TEXT -> new String(recordBody.values()[col]);
                   case INTEGER ->
-                      Integer.toString(ByteBuffer.wrap(recordBody.values()[col]).getInt());
-                  default -> "null";
+                      Long.toString(ByteUtils.toInteger(recordBody.values()[col]).longValue());
+                  case REAL ->
+                      Double.toString(ByteUtils.toReal(recordBody.values()[col]).doubleValue());
+                  case NULL -> "null";
                 })
                 .collect(Collectors.joining("|"))
         )

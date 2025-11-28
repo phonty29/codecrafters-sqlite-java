@@ -2,11 +2,9 @@ package executors;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import query_processor.SqlProcessor;
 import struct.Database;
-import struct.Table;
 
 public class QueryExecutor implements Executor {
 
@@ -22,11 +20,7 @@ public class QueryExecutor implements Executor {
       Database database = new Database(databaseFile);
 
       String tableName = queryProcessor.tableName();
-      Table table = Arrays.stream(database.getTables())
-          .filter(t -> t.meta().name().contains(tableName))
-          .findFirst()
-          .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
-
+      var table = database.getTable(tableName);
       database.navigateToTable(table);
 
       // select count(*) from table;

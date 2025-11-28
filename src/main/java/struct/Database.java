@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 
 public class Database {
 
@@ -45,6 +46,13 @@ public class Database {
 
   public Table[] getTables() {
     return this.tables;
+  }
+
+  public Table getTable(String tableName) {
+    return Arrays.stream(this.tables)
+        .filter(t -> t.meta().name().contains(tableName))
+        .findFirst()
+        .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
   }
 
   public void navigateToTable(Table table) throws IOException {
