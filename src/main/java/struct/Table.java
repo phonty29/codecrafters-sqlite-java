@@ -4,17 +4,16 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import query_processor.SqlProcessor;
 import query_processor.parser.ast.Column;
-import query_processor.parser.ast.ColumnType;
 import query_processor.parser.ast.CreateStmt;
 
 public class Table {
 
   private final Meta meta;
   private BTreePage tablePage;
+  private final Column[] columns;
 
 
   public Table(Cell cell) {
@@ -27,6 +26,13 @@ public class Table {
     int rootPage = getRootPage(cellValues[rootPageOrder]);
     String sqlStmt = new String(cellValues[sqlStmtOrder]);
     this.meta = new Meta(tableName, rootPage, sqlStmt);
+
+    // Init table structure
+    SqlProcessor sqlProcessor = new SqlProcessor();
+    this.columns =
+        ((CreateStmt) sqlProcessor.process(this.meta().sqlStmt()))
+            .columns()
+            .toArray(Column[]::new);
   }
 
   public void setTablePage(BTreePage tablePage) {
@@ -45,15 +51,6 @@ public class Table {
             .stream()
             .map(Column::name)
             .toList();
-
-//    Map<String, ColumnType> orderedColumnsMap =
-//        ((CreateStmt) new SqlProcessor().process(
-//            this.meta().sqlStmt()))
-//            .columns()
-//            .stream()
-//            .collect(Collectors.toMap(Column::name, Column::type));
-//    System.out.println("ordered columns map: " + orderedColumnsMap);
-
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;
     for (String queriedColumn : queriedColumns) {
@@ -66,7 +63,7 @@ public class Table {
   }
 
   /**
-   * REFACTOR! Types depend on column type in this.sqlStmt
+   * REFACTOR! Proper retrieve for types INTEGER, REAL. Now it doesn't count the size
    *
    * @param columns - the order of columns in the table b-tree page structure
    * @return list of values from cells (not typed!)
@@ -77,7 +74,11 @@ public class Table {
         .map(Cell::getRecordBody)
         .map(recordBody ->
             Arrays.stream(columns)
-                .mapToObj(col -> new String(recordBody.values()[col]))
+                .mapToObj(col -> switch (this.columns[col].type()) {
+                  case TEXT -> new String(recordBody.values()[col]);
+                  case INTEGER -> Integer.toString(ByteBuffer.wrap(recordBody.values()[col]).getInt());
+                  default -> "null";
+                })
                 .collect(Collectors.joining("|"))
         )
         .toList();
