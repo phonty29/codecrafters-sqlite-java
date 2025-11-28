@@ -3,30 +3,17 @@ package executors;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import query_processor.SqlProcessor;
-import query_processor.parser.ast.Column;
-import query_processor.parser.ast.ColumnType;
-import query_processor.parser.ast.CreateStmt;
-import query_processor.parser.ast.FunctionCall;
-import query_processor.parser.ast.Identifier;
-import query_processor.parser.ast.SelectItem;
-import query_processor.parser.ast.SelectStmt;
-import query_processor.parser.ast.TableRef;
 import struct.Database;
 import struct.Table;
 
 public class QueryExecutor implements Executor {
 
-  private final SqlProcessor sqlProcessor;
-  private final SelectStmt queryTree;
+  private final SqlProcessor queryProcessor;
 
   public QueryExecutor(String query) {
-    this.sqlProcessor = new SqlProcessor();
-    this.queryTree = (SelectStmt) this.sqlProcessor.process(query);
+    this.queryProcessor = new SqlProcessor(query);
   }
 
   @Override
@@ -34,7 +21,7 @@ public class QueryExecutor implements Executor {
     try (FileInputStream databaseFile = new FileInputStream(filePath)) {
       Database database = new Database(databaseFile);
 
-      String tableName = ((TableRef) this.queryTree.from()).name();
+      String tableName = queryProcessor.tableName();
       Table table = Arrays.stream(database.getTables())
           .filter(t -> t.meta().name().contains(tableName))
           .findFirst()
@@ -42,21 +29,14 @@ public class QueryExecutor implements Executor {
 
       database.navigateToTable(table);
 
-      List<SelectItem> items = this.queryTree.selectList();
       // select count(*) from table;
-      if (items.size() == 1 &&
-          items.getFirst().expr() instanceof FunctionCall &&
-          ((FunctionCall) items.getFirst().expr()).name().equals("count")
-      ) {
+      if (this.queryProcessor.isCount()) {
         System.out.println(table.getRows());
       }
 
       // select [columnName, ...] from [tableName];
-      if (!items.isEmpty() && items.getFirst().expr() instanceof Identifier) {
-        List<String> queriedColumns = items
-            .stream()
-            .map(i -> ((Identifier) i.expr()).name())
-            .toList();
+      if (queryProcessor.isColumnsRetrieval()) {
+        List<String> queriedColumns = this.queryProcessor.getColumnNames();
         table.getByColumns(queriedColumns).forEach(System.out::println);
       }
     } catch (IOException e) {

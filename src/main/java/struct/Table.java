@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import query_processor.SqlProcessor;
 import query_processor.parser.ast.Column;
-import query_processor.parser.ast.CreateStmt;
 
 public class Table {
 
   private final Meta meta;
   private BTreePage tablePage;
+  private final SqlProcessor sqlProcessor;
   private final Column[] columns;
 
 
@@ -28,11 +28,8 @@ public class Table {
     this.meta = new Meta(tableName, rootPage, sqlStmt);
 
     // Init table structure
-    SqlProcessor sqlProcessor = new SqlProcessor();
-    this.columns =
-        ((CreateStmt) sqlProcessor.process(this.meta().sqlStmt()))
-            .columns()
-            .toArray(Column[]::new);
+    this.sqlProcessor = new SqlProcessor(this.meta.sqlStmt);
+    this.columns = sqlProcessor.getColumns();
   }
 
   public void setTablePage(BTreePage tablePage) {
@@ -43,14 +40,8 @@ public class Table {
     return this.tablePage.getPageHeader().cellsCount();
   }
 
-  public List<String> getByColumns(List<String> queriedColumns) throws IOException {
-    List<String> orderedColumns =
-        ((CreateStmt) new SqlProcessor().process(
-            this.meta().sqlStmt()))
-            .columns()
-            .stream()
-            .map(Column::name)
-            .toList();
+  public List<String> getByColumns(List<String> queriedColumns) {
+    List<String> orderedColumns = this.sqlProcessor.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;
     for (String queriedColumn : queriedColumns) {
@@ -67,9 +58,8 @@ public class Table {
    *
    * @param columns - the order of columns in the table b-tree page structure
    * @return list of values from cells (not typed!)
-   * @throws IOException
    */
-  private List<String> getByColumns(int[] columns) throws IOException {
+  private List<String> getByColumns(int[] columns) {
     return Arrays.stream(this.tablePage.getCells())
         .map(Cell::getRecordBody)
         .map(recordBody ->
