@@ -14,6 +14,7 @@ import query_processor.parser.ast.Statement;
 import query_processor.parser.ast.TableRef;
 
 public class SqlProcessor {
+
   private final Statement queryTree;
 
   public SqlProcessor(String query) {
@@ -31,14 +32,16 @@ public class SqlProcessor {
     if (this.queryTree instanceof SelectStmt) {
       return (SelectStmt) this.queryTree;
     }
-    throw new IllegalStateException("Unknown query type: " + this.queryTree.getClass().getSimpleName());
+    throw new IllegalStateException(
+        "Unknown query type: " + this.queryTree.getClass().getSimpleName());
   }
 
   private CreateStmt create() {
     if (this.queryTree instanceof CreateStmt) {
       return (CreateStmt) this.queryTree;
     }
-    throw new IllegalStateException("Unknown query type: " + this.queryTree.getClass().getSimpleName());
+    throw new IllegalStateException(
+        "Unknown query type: " + this.queryTree.getClass().getSimpleName());
   }
 
   public String tableName() {
@@ -67,14 +70,14 @@ public class SqlProcessor {
           .map(i -> ((Identifier) i.expr()).name())
           .toList();
     } else if (this.queryTree instanceof CreateStmt) {
-        return create()
-            .columns()
-            .stream()
-            .map(Column::name)
-            .toList();
-    }
-    else {
-      throw new IllegalStateException("Unknown query type: " + this.queryTree.getClass().getSimpleName());
+      return create()
+          .columns()
+          .stream()
+          .map(Column::name)
+          .toList();
+    } else {
+      throw new IllegalStateException(
+          "Unknown query type: " + this.queryTree.getClass().getSimpleName());
     }
   }
 
@@ -83,9 +86,9 @@ public class SqlProcessor {
       return create()
           .columns()
           .toArray(Column[]::new);
-    }
-    else {
-      throw new IllegalStateException("Unknown query type: " + this.queryTree.getClass().getSimpleName());
+    } else {
+      throw new IllegalStateException(
+          "Unknown query type: " + this.queryTree.getClass().getSimpleName());
     }
   }
 }

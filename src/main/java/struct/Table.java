@@ -11,9 +11,9 @@ import query_processor.parser.ast.Column;
 public class Table {
 
   private final Meta meta;
-  private BTreePage tablePage;
   private final SqlProcessor sqlProcessor;
   private final Column[] columns;
+  private BTreePage tablePage;
 
 
   public Table(Cell cell) {
@@ -66,7 +66,8 @@ public class Table {
             Arrays.stream(columns)
                 .mapToObj(col -> switch (this.columns[col].type()) {
                   case TEXT -> new String(recordBody.values()[col]);
-                  case INTEGER -> Integer.toString(ByteBuffer.wrap(recordBody.values()[col]).getInt());
+                  case INTEGER ->
+                      Integer.toString(ByteBuffer.wrap(recordBody.values()[col]).getInt());
                   default -> "null";
                 })
                 .collect(Collectors.joining("|"))
