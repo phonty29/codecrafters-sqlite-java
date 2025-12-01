@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import query_processor.SqlProcessor;
 import query_processor.parser.ast.Column;
@@ -41,7 +44,7 @@ public class Table {
     return this.tablePage.getPageHeader().cellsCount();
   }
 
-  public List<String> getByColumns(List<String> queriedColumns) {
+  public List<String> getByColumns(List<String> queriedColumns, Map<String, List<Function<String, Boolean>>> filters) {
     List<String> orderedColumns = this.sqlProcessor.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;
@@ -51,29 +54,45 @@ public class Table {
         columnOrders[colIdx++] = idx;
       }
     }
-    return this.getByColumns(columnOrders);
+    return this.getByColumns(columnOrders, filters);
   }
 
   /**
    * @param columns - the order of columns in the table b-tree page structure
    * @return list of values from cells (not typed!)
    */
-  private List<String> getByColumns(int[] columns) {
+  private List<String> getByColumns(int[] columns,
+      Map<String, List<Function<String, Boolean>>> filterMap) {
     return Arrays.stream(this.tablePage.getCells())
         .map(Cell::getRecordBody)
+        .filter(recordBody -> {
+          boolean condition = true;
+          for (int i = 0; i < this.columns.length; i++) {
+            String filterKey = this.columns[i].name();
+            List<Function<String, Boolean>> filters = filterMap.get(filterKey);
+            if (Objects.isNull(filters)) {
+              continue;
+            }
+            String value = getValueOfColumn(i, recordBody.values()[i]);
+            condition = filters.stream().allMatch(filter -> filter.apply(value));
+          }
+          return condition;
+        })
         .map(recordBody ->
             Arrays.stream(columns)
-                .mapToObj(col -> switch (this.columns[col].type()) {
-                  case TEXT -> new String(recordBody.values()[col]);
-                  case INTEGER ->
-                      Long.toString(ByteUtils.toInteger(recordBody.values()[col]).longValue());
-                  case REAL ->
-                      Double.toString(ByteUtils.toReal(recordBody.values()[col]).doubleValue());
-                  case NULL -> "null";
-                })
+                .mapToObj(col -> getValueOfColumn(col, recordBody.values()[col]))
                 .collect(Collectors.joining("|"))
         )
         .toList();
+  }
+
+  private String getValueOfColumn(int col, byte[] value) {
+    return switch (this.columns[col].type()) {
+      case TEXT -> new String(value);
+      case INTEGER -> Long.toString(ByteUtils.toInteger(value).longValue());
+      case REAL -> Double.toString(ByteUtils.toReal(value).doubleValue());
+      case NULL -> "null";
+    };
   }
 
   public Meta meta() {

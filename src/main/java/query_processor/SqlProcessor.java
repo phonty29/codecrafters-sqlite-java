@@ -1,13 +1,18 @@
 package query_processor;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import query_processor.lexer.SqlLexer;
 import query_processor.lexer.Token;
 import query_processor.parser.SqlParser;
+import query_processor.parser.ast.BinaryOp;
 import query_processor.parser.ast.Column;
 import query_processor.parser.ast.CreateStmt;
 import query_processor.parser.ast.FunctionCall;
 import query_processor.parser.ast.Identifier;
+import query_processor.parser.ast.Literal;
 import query_processor.parser.ast.SelectItem;
 import query_processor.parser.ast.SelectStmt;
 import query_processor.parser.ast.Statement;
@@ -79,6 +84,25 @@ public class SqlProcessor {
       throw new IllegalStateException(
           "Unknown query type: " + this.queryTree.getClass().getSimpleName());
     }
+  }
+
+  public Map<String, List<Function<String, Boolean>>> filters() {
+    if (this.queryTree instanceof SelectStmt && Objects.nonNull(select().where())) {
+      var where = (BinaryOp) select().where();
+      if (where.left() instanceof Identifier && where.right() instanceof Literal) {
+        Function<String, Boolean> filter = (val) -> {
+          if (where.op().contentEquals("=")) {
+            var literal = (Literal) where.right();
+            return literal.value().equals(val);
+          }
+          throw new IllegalArgumentException("Unknown filter: " + val);
+        };
+
+        String filterKey = ((Identifier) where.left()).name();
+        return Map.of(filterKey, List.of(filter));
+      }
+    }
+    return Map.of();
   }
 
   public Column[] getColumns() {
