@@ -4,14 +4,14 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Cell {
+public class LeafTableCell {
 
   private final int recordSize;
   private final int rowId;
   private final RecordHeader recordHeader;
   private final RecordBody recordBody;
 
-  public Cell(ByteBuffer cellBuffer) {
+  public LeafTableCell(ByteBuffer cellBuffer) {
     this.recordSize = readVarInt(cellBuffer);
     this.rowId = readVarInt(cellBuffer);
     // Payload

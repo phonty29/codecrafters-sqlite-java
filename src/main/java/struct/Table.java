@@ -20,12 +20,12 @@ public class Table {
   private BTreePage tablePage;
 
 
-  public Table(Cell cell) {
+  public Table(LeafTableCell leafTableCell) {
     // Get meta from sqlite_schema cells
     int tableNameOrder = 2;
     int rootPageOrder = 3;
     int sqlStmtOrder = 4;
-    byte[][] cellValues = cell.getRecordBody().values();
+    byte[][] cellValues = leafTableCell.getRecordBody().values();
     String tableName = new String(cellValues[tableNameOrder]);
     int rootPage = getRootPage(cellValues[rootPageOrder]);
     String sqlStmt = new String(cellValues[sqlStmtOrder]);
@@ -64,7 +64,7 @@ public class Table {
   private List<String> getByColumns(int[] columns,
       Map<String, List<Function<String, Boolean>>> filterMap) {
     return Arrays.stream(this.tablePage.getCells())
-        .map(Cell::getRecordBody)
+        .map(LeafTableCell::getRecordBody)
         .filter(recordBody -> {
           boolean condition = true;
           for (int i = 0; i < this.columns.length; i++) {
