@@ -23,6 +23,10 @@ public class SqlProcessor {
   private final Statement queryTree;
 
   public SqlProcessor(String query) {
+    query = query
+        .replaceAll("\"", "")
+        .toLowerCase()
+        .trim();
     SqlLexer lexer = new SqlLexer(query);
     List<Token> tokens = lexer.tokenize();
     SqlParser parser = new SqlParser(tokens);
