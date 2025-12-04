@@ -12,9 +12,6 @@ public class BTreePage {
     var bTreePageType = BTreePageType.valueOf(pageBuffer.get());
     // Get cells count (skip 2 bytes)
     var cellsCount = pageBuffer.position(pageBuffer.position() + 2).getShort();
-    if (!bTreePageType.equals(BTreePageType.LEAF_TABLE)) {
-      throw new IllegalArgumentException("Not supported page type: " + bTreePageType);
-    }
     // Initialize page header
     this.pageHeader = new PageHeader(bTreePageType, cellsCount);
     // Initialize cells and fulfill

@@ -137,9 +137,9 @@ public class SqlParser {
       return ColumnType.REAL;
     } else if (match(TokenType.KEYWORD_NULL)) {
       return ColumnType.NULL;
+    } else {
+      return ColumnType.INTEGER;
     }
-
-    throw new IllegalArgumentException("Unkown column type: " + t().text);
   }
 
   public SelectStmt parseSelect() {
