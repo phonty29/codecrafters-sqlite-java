@@ -1,11 +1,12 @@
 package struct;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class BTreePage {
 
   private final PageHeader pageHeader;
-  private final LeafTableCell[] leafTableCells;
+  private final Cell[] cells;
 
   public BTreePage(ByteBuffer pageBuffer) {
     // Get the b-tree page type
@@ -15,10 +16,10 @@ public class BTreePage {
     // Initialize page header
     this.pageHeader = new PageHeader(bTreePageType, cellsCount);
     // Initialize leafTableCells and fulfill
-    this.leafTableCells = new LeafTableCell[cellsCount];
+    this.cells = new Cell[cellsCount];
     short startOfTheCellContentArea = pageBuffer.getShort();
     // Skip 1 byte
-    pageBuffer.get();
+    pageBuffer.position(pageBuffer.position() + 1);
     // Start reading the cell pointers array
     ByteBuffer cellPointersBuffer = pageBuffer.slice(pageBuffer.position(), 2 * cellsCount);
     short[] offsets = new short[cellsCount];
@@ -29,14 +30,14 @@ public class BTreePage {
       if (startOfTheCellContentArea == offsets[0]) {
         if (cellsCount == 1) {
           cellBuffer = pageBuffer.position(offsets[i]).slice();
-          leafTableCells[i] = new LeafTableCell(cellBuffer);
+          cells[i] = initCell(cellBuffer);
         }
         if (i > 0) {
           cellBuffer = pageBuffer.slice(offsets[i-1], offsets[i] - offsets[i-1]);
-          leafTableCells[i-1] = new LeafTableCell(cellBuffer);
+          cells[i-1] = initCell(cellBuffer);
           if (i == cellsCount - 1) {
             cellBuffer = pageBuffer.position(offsets[i]).slice();
-            leafTableCells[i] = new LeafTableCell(cellBuffer);
+            cells[i] = initCell(cellBuffer);
           }
         }
       } else {
@@ -45,9 +46,18 @@ public class BTreePage {
         } else {
           cellBuffer = pageBuffer.slice(offsets[i], offsets[i - 1] - offsets[i]);
         }
-        leafTableCells[i] = new LeafTableCell(cellBuffer);
+        cells[i] = initCell(cellBuffer);
       }
     }
+  }
+
+  private Cell initCell(ByteBuffer cellBuffer) {
+    if (this.pageHeader.pageType.equals(BTreePageType.LEAF_TABLE)) {
+      return new LeafTableCell(cellBuffer);
+    } else if (this.pageHeader.pageType.equals(BTreePageType.INT_TABLE)) {
+      return new InteriorTableCell(cellBuffer);
+    }
+    throw new IllegalStateException("Unsupported page type: " + this.pageHeader.pageType);
   }
 
   public PageHeader getPageHeader() {
@@ -55,7 +65,7 @@ public class BTreePage {
   }
 
   public LeafTableCell[] getCells() {
-    return this.leafTableCells;
+    return Arrays.stream(this.cells).map(cell -> (LeafTableCell) cell).toArray(LeafTableCell[]::new);
   }
 
   public record PageHeader(BTreePageType pageType, int cellsCount) {

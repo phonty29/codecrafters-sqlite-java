@@ -55,6 +55,7 @@ public class Database {
         .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
   }
 
+  // Add support for interior table pages
   public void navigateToTable(Table table) throws IOException {
     ByteBuffer tablePageBuffer = ByteBuffer.allocate(this.pageSize);
     this.channel.position((long) (table.meta().rootPage() - 1) * this.pageSize)

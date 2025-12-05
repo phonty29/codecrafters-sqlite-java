@@ -97,7 +97,7 @@ public class SqlProcessor {
         Function<String, Boolean> filter = (val) -> {
           if (where.op().contentEquals("=")) {
             var literal = (Literal) where.right();
-            return literal.value().equals(val);
+            return literal.value().equals(val.toLowerCase());
           }
           throw new IllegalArgumentException("Unknown filter: " + val);
         };

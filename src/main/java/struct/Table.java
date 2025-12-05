@@ -19,7 +19,6 @@ public class Table {
   private final Column[] columns;
   private BTreePage tablePage;
 
-
   public Table(LeafTableCell leafTableCell) {
     // Get meta from sqlite_schema cells
     int tableNameOrder = 2;

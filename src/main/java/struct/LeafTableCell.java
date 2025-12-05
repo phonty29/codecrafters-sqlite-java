@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LeafTableCell {
+public class LeafTableCell implements Cell {
 
   private final int recordSize;
   private final int rowId;
@@ -51,21 +51,6 @@ public class LeafTableCell {
       return (serialType - 12) / 2;
     }
     return serialType;
-  }
-
-  // REFACTOR! This method has side effects. Turn it to immutability of cellBuffer
-  private int readVarInt(ByteBuffer cellBuffer) {
-    int result = 0;
-    for (int i = 0; i < 8; i++) {
-      final byte current = cellBuffer.get();
-      result = (result << 7) + (current & 0x7F);
-      if ((current & 0x80) == 0) {
-        return result;
-      }
-    }
-    final byte last = cellBuffer.get();
-    result = (result << 8) + last;
-    return result;
   }
 
   public record RecordHeader(
