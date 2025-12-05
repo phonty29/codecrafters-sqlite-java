@@ -7,7 +7,11 @@ public class InteriorTableCell implements Cell {
   private final int rowId;
 
   public InteriorTableCell(ByteBuffer cellBuffer) {
-    this.rootPage = readVarInt(cellBuffer);
+    this.rootPage = cellBuffer.getInt();
     this.rowId = readVarInt(cellBuffer);
+  }
+
+  public int getRootPage() {
+    return rootPage;
   }
 }

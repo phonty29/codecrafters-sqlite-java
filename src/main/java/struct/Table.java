@@ -53,16 +53,30 @@ public class Table {
         columnOrders[colIdx++] = idx;
       }
     }
-    return this.getByColumns(columnOrders, filters);
+
+    return switch (this.tablePage.getPageHeader().pageType()) {
+      case LEAF_TABLE -> getByColumns(columnOrders, filters);
+      case INT_TABLE -> getByColumnsForInteriorTable(columnOrders, filters);
+      default -> throw new IllegalStateException("Not supported page type: " + this.tablePage.getPageHeader().pageType());
+    };
+  }
+
+  private List<String> getByColumnsForInteriorTable(int[] columns,
+      Map<String, List<Function<String, Boolean>>> filterMap) {
+//    for (InteriorTableCell interiorCell : this.tablePage.getInteriorCells()) {
+//      System.out.println("Interior cell on read: " + interiorCell.getRootPage());
+//    }
+    return List.of();
   }
 
   /**
    * @param columns - the order of columns in the table b-tree page structure
-   * @return list of values from cells (not typed!)
+   * @return list of values from cells
    */
   private List<String> getByColumns(int[] columns,
       Map<String, List<Function<String, Boolean>>> filterMap) {
-    return Arrays.stream(this.tablePage.getCells())
+    System.out.println("getByColumns");
+    return Arrays.stream(this.tablePage.getLeafCells())
         .map(LeafTableCell::getRecordBody)
         .filter(recordBody -> {
           boolean condition = true;

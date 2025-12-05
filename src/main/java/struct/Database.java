@@ -30,7 +30,7 @@ public class Database {
     // Initialize tables
     int numberOfTables = this.bTreePage.getPageHeader().cellsCount();
     this.tables = new Table[numberOfTables];
-    LeafTableCell[] tableLeafTableCells = this.bTreePage.getCells();
+    LeafTableCell[] tableLeafTableCells = this.bTreePage.getLeafCells();
     for (int i = 0; i < tableLeafTableCells.length; i++) {
       tables[i] = new Table(tableLeafTableCells[i]);
     }
