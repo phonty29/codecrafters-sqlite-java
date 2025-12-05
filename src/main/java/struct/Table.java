@@ -2,6 +2,7 @@ package struct;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -10,16 +11,19 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import query_processor.SqlProcessor;
 import query_processor.parser.ast.Column;
+import query_processor.parser.ast.ColumnType;
 import utils.ByteUtils;
 
 public class Table {
 
+  private final Database database; // make global acceptable and singleton
   private final Meta meta;
   private final SqlProcessor sqlProcessor;
   private final Column[] columns;
   private BTreePage tablePage;
 
-  public Table(LeafTableCell leafTableCell) {
+  public Table(Database db, LeafTableCell leafTableCell) {
+    this.database = db;
     // Get meta from sqlite_schema cells
     int tableNameOrder = 2;
     int rootPageOrder = 3;
@@ -43,7 +47,8 @@ public class Table {
     return this.tablePage.getPageHeader().cellsCount();
   }
 
-  public List<String> getByColumns(List<String> queriedColumns, Map<String, List<Function<String, Boolean>>> filters) {
+  public List<String> getByColumns(List<String> queriedColumns, Map<String, List<Function<String, Boolean>>> filters)
+      throws IOException {
     List<String> orderedColumns = this.sqlProcessor.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;
@@ -62,11 +67,17 @@ public class Table {
   }
 
   private List<String> getByColumnsForInteriorTable(int[] columns,
-      Map<String, List<Function<String, Boolean>>> filterMap) {
-//    for (InteriorTableCell interiorCell : this.tablePage.getInteriorCells()) {
-//      System.out.println("Interior cell on read: " + interiorCell.getRootPage());
-//    }
-    return List.of();
+      Map<String, List<Function<String, Boolean>>> filterMap) throws IOException {
+    List<String> data = new ArrayList<>();
+    int rightmostPointer = this.tablePage.getRightmostPointer();
+    for (InteriorTableCell interiorCell : this.tablePage.getInteriorCells()) {
+      var tablePage = this.database.getPage(interiorCell.getRootPage());
+      this.setTablePage(tablePage);
+      data.addAll(this.getByColumns(columns, filterMap));
+    }
+    this.setTablePage(this.database.getPage(rightmostPointer));
+    data.addAll(this.getByColumns(columns, filterMap));
+    return data;
   }
 
   /**
@@ -75,10 +86,8 @@ public class Table {
    */
   private List<String> getByColumns(int[] columns,
       Map<String, List<Function<String, Boolean>>> filterMap) {
-    System.out.println("getByColumns");
     return Arrays.stream(this.tablePage.getLeafCells())
-        .map(LeafTableCell::getRecordBody)
-        .filter(recordBody -> {
+        .filter(cell -> {
           boolean condition = true;
           for (int i = 0; i < this.columns.length; i++) {
             String filterKey = this.columns[i].name();
@@ -86,14 +95,20 @@ public class Table {
             if (Objects.isNull(filters)) {
               continue;
             }
-            String value = getValueOfColumn(i, recordBody.values()[i]);
+            String value = getValueOfColumn(i, cell.getRecordBody().values()[i]);
             condition = filters.stream().allMatch(filter -> filter.apply(value));
           }
           return condition;
         })
-        .map(recordBody ->
+        .map(cell ->
             Arrays.stream(columns)
-                .mapToObj(col -> getValueOfColumn(col, recordBody.values()[col]))
+                .mapToObj(col -> {
+                  if (this.columns[col].name().contentEquals("id") && this.columns[col].type().equals(
+                      ColumnType.INTEGER)) {
+                    return Integer.toString(cell.getRowId());
+                  }
+                  return getValueOfColumn(col, cell.getRecordBody().values()[col]);
+                })
                 .collect(Collectors.joining("|"))
         )
         .toList();

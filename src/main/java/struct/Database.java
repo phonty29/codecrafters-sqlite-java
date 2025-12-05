@@ -32,7 +32,7 @@ public class Database {
     this.tables = new Table[numberOfTables];
     LeafTableCell[] tableLeafTableCells = this.bTreePage.getLeafCells();
     for (int i = 0; i < tableLeafTableCells.length; i++) {
-      tables[i] = new Table(tableLeafTableCells[i]);
+      tables[i] = new Table(this, tableLeafTableCells[i]);
     }
   }
 
@@ -61,5 +61,12 @@ public class Database {
     this.channel.position((long) (table.meta().rootPage() - 1) * this.pageSize)
         .read(tablePageBuffer);
     table.setTablePage(new BTreePage(tablePageBuffer.duplicate().clear()));
+  }
+
+  public BTreePage getPage(int rootPage) throws IOException {
+    ByteBuffer pageBuffer = ByteBuffer.allocate(this.pageSize);
+    this.channel.position((long) (rootPage - 1) * this.pageSize)
+        .read(pageBuffer);
+    return new BTreePage(pageBuffer.duplicate().clear());
   }
 }

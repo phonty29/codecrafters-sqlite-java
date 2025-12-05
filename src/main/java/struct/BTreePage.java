@@ -83,8 +83,11 @@ public class BTreePage {
     throw new IllegalStateException("Not a interior table page");
   }
 
-  public Optional<Integer> getRightmostPointer() {
-    return this.rightmostPointer;
+  public int getRightmostPointer() {
+    if (this.rightmostPointer.isPresent()) {
+      return this.rightmostPointer.get();
+    }
+    throw new IllegalStateException("Not an interior table page");
   }
 
   public record PageHeader(BTreePageType pageType, int cellsCount) {
