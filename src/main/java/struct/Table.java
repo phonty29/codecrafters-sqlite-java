@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import query_processor.SqlProcessor;
 import query_processor.parser.ast.Column;
 import query_processor.parser.ast.ColumnType;
+import struct.cells.InteriorTableCell;
+import struct.cells.LeafTableCell;
 import utils.ByteUtils;
 
 public class Table {
@@ -70,8 +72,8 @@ public class Table {
       Map<String, List<Function<String, Boolean>>> filterMap) throws IOException {
     List<String> data = new ArrayList<>();
     int rightmostPointer = this.tablePage.getRightmostPointer();
-    for (InteriorTableCell interiorCell : this.tablePage.getInteriorCells()) {
-      var tablePage = this.database.getPage(interiorCell.getRootPage());
+    for (var cell : (InteriorTableCell[]) this.tablePage.getCells()) {
+      var tablePage = this.database.getPage(cell.getRootPage());
       this.setTablePage(tablePage);
       data.addAll(this.getByColumns(columns, filterMap));
     }
@@ -86,7 +88,11 @@ public class Table {
    */
   private List<String> getByColumns(int[] columns,
       Map<String, List<Function<String, Boolean>>> filterMap) {
-    return Arrays.stream(this.tablePage.getLeafCells())
+    if (!(this.tablePage.getCells() instanceof LeafTableCell[])) {
+      throw new IllegalStateException("Current page is not a leaf table");
+    }
+
+    return Arrays.stream((LeafTableCell[]) this.tablePage.getCells())
         .filter(cell -> {
           boolean condition = true;
           for (int i = 0; i < this.columns.length; i++) {

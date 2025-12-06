@@ -1,4 +1,4 @@
-package struct;
+package struct.cells;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -36,6 +36,7 @@ public class LeafTableCell implements Cell {
     this.recordBody = new RecordBody(values);
   }
 
+  @Override
   public int getRowId() {
     return rowId;
   }
@@ -46,22 +47,6 @@ public class LeafTableCell implements Cell {
 
   public RecordBody getRecordBody() {
     return this.recordBody;
-  }
-
-  private int getSizeFromSerialType(int serialType) {
-    if (serialType >= 0 && serialType <= 4) {
-      return serialType;
-    } else if (serialType == 5) {
-      return 6;
-    } else if (serialType == 6 || serialType == 7) {
-      return 8;
-    } else if (serialType >= 13 && serialType % 2 == 1) {
-      return (serialType - 13) / 2;
-    } else if (serialType >= 12) {
-      return (serialType - 12) / 2;
-    } else {
-      return 0;
-    }
   }
 
   public record RecordHeader(

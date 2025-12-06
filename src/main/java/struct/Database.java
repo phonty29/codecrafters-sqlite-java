@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import struct.cells.LeafTableCell;
 
 public class Database {
 
@@ -27,12 +28,12 @@ public class Database {
     this.channel.position(0).read(pageBuffer);
     this.bTreePage = new BTreePage(pageBuffer.position(100));
 
-    // Initialize tables
+    // Initialize tables with meta from sqlite_schema
     int numberOfTables = this.bTreePage.getPageHeader().cellsCount();
     this.tables = new Table[numberOfTables];
-    LeafTableCell[] tableLeafTableCells = this.bTreePage.getLeafCells();
-    for (int i = 0; i < tableLeafTableCells.length; i++) {
-      tables[i] = new Table(this, tableLeafTableCells[i]);
+    LeafTableCell[] schemaCells = (LeafTableCell[]) this.bTreePage.getCells();
+    for (int i = 0; i < schemaCells.length; i++) {
+      tables[i] = new Table(this, schemaCells[i]);
     }
   }
 
@@ -55,7 +56,6 @@ public class Database {
         .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
   }
 
-  // Add support for interior table pages
   public void navigateToTable(Table table) throws IOException {
     ByteBuffer tablePageBuffer = ByteBuffer.allocate(this.pageSize);
     this.channel.position((long) (table.meta().rootPage() - 1) * this.pageSize)
