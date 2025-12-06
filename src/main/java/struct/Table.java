@@ -22,7 +22,8 @@ public class Table {
   private final Meta meta;
   private final SqlProcessor sqlProcessor;
   private final Column[] columns;
-  private BTreePage tablePage;
+  private BTreePage rootPage;
+  private BTreePage currentPage;
 
   public Table(Database db, LeafTableCell leafTableCell) {
     this.database = db;
@@ -32,21 +33,38 @@ public class Table {
     int sqlStmtOrder = 4;
     byte[][] cellValues = leafTableCell.getRecordBody().values();
     String tableName = new String(cellValues[tableNameOrder]);
-    int rootPage = getRootPage(cellValues[rootPageOrder]);
+    int rootPageNumber = getRootPage(cellValues[rootPageOrder]);
     String sqlStmt = new String(cellValues[sqlStmtOrder]);
-    this.meta = new Meta(tableName, rootPage, sqlStmt);
+    this.meta = new Meta(tableName, rootPageNumber, sqlStmt);
 
     // Init table structure
     this.sqlProcessor = new SqlProcessor(this.meta.sqlStmt);
     this.columns = sqlProcessor.getColumns();
   }
 
-  public void setTablePage(BTreePage tablePage) {
-    this.tablePage = tablePage;
+  public void setCurrentPage(BTreePage currentPage) {
+    this.currentPage = currentPage;
+  }
+
+  public void setRootPage(BTreePage rootPage) {
+    // Root page can be set only once
+    if (Objects.isNull(this.rootPage)) {
+      this.rootPage = rootPage;
+      this.currentPage = rootPage;
+    } else {
+      throw new IllegalArgumentException("Cannot change root page");
+    }
+  }
+
+  public BTreePage getRootPage() {
+    return this.rootPage;
   }
 
   public int getRows() throws IOException {
-    return this.tablePage.getPageHeader().cellsCount();
+    if (Objects.nonNull(this.rootPage) && this.rootPage.getPageHeader().pageType().equals(BTreePageType.LEAF_TABLE)) {
+      return this.rootPage.getPageHeader().cellsCount();
+    }
+    throw new IllegalStateException("Root page is not a leaf table");
   }
 
   public List<String> getByColumns(List<String> queriedColumns, Map<String, List<Function<String, Boolean>>> filters)
@@ -61,23 +79,22 @@ public class Table {
       }
     }
 
-    return switch (this.tablePage.getPageHeader().pageType()) {
+    return switch (this.currentPage.getPageHeader().pageType()) {
       case LEAF_TABLE -> getByColumns(columnOrders, filters);
       case INT_TABLE -> getByColumnsForInteriorTable(columnOrders, filters);
-      default -> throw new IllegalStateException("Not supported page type: " + this.tablePage.getPageHeader().pageType());
+      default -> throw new IllegalStateException("Not supported page type: " + this.currentPage.getPageHeader().pageType());
     };
   }
 
   private List<String> getByColumnsForInteriorTable(int[] columns,
       Map<String, List<Function<String, Boolean>>> filterMap) throws IOException {
     List<String> data = new ArrayList<>();
-    int rightmostPointer = this.tablePage.getRightmostPointer();
-    for (var cell : (InteriorTableCell[]) this.tablePage.getCells()) {
-      var tablePage = this.database.getPage(cell.getRootPage());
-      this.setTablePage(tablePage);
+    int rightmostPointer = this.currentPage.getRightmostPointer();
+    for (var cell : (InteriorTableCell[]) this.currentPage.getCells()) {
+      this.database.setPageOfTable(cell.getRootPage(), this);
       data.addAll(this.getByColumns(columns, filterMap));
     }
-    this.setTablePage(this.database.getPage(rightmostPointer));
+    this.database.setPageOfTable(rightmostPointer, this);
     data.addAll(this.getByColumns(columns, filterMap));
     return data;
   }
@@ -88,11 +105,11 @@ public class Table {
    */
   private List<String> getByColumns(int[] columns,
       Map<String, List<Function<String, Boolean>>> filterMap) {
-    if (!(this.tablePage.getCells() instanceof LeafTableCell[])) {
+    if (!(this.currentPage.getCells() instanceof LeafTableCell[])) {
       throw new IllegalStateException("Current page is not a leaf table");
     }
 
-    return Arrays.stream((LeafTableCell[]) this.tablePage.getCells())
+    return Arrays.stream((LeafTableCell[]) this.currentPage.getCells())
         .filter(cell -> {
           boolean condition = true;
           for (int i = 0; i < this.columns.length; i++) {
@@ -144,7 +161,7 @@ public class Table {
 
   public record Meta(
       String name,
-      int rootPage,
+      int rootPageNumber,
       String sqlStmt
   ) {
 

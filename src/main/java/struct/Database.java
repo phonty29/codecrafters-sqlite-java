@@ -58,9 +58,9 @@ public class Database {
 
   public void navigateToTable(Table table) throws IOException {
     ByteBuffer tablePageBuffer = ByteBuffer.allocate(this.pageSize);
-    this.channel.position((long) (table.meta().rootPage() - 1) * this.pageSize)
+    this.channel.position((long) (table.meta().rootPageNumber() - 1) * this.pageSize)
         .read(tablePageBuffer);
-    table.setTablePage(new BTreePage(tablePageBuffer.duplicate().clear()));
+    table.setRootPage(new BTreePage(tablePageBuffer.duplicate().clear()));
   }
 
   public BTreePage getPage(int rootPage) throws IOException {
@@ -68,5 +68,12 @@ public class Database {
     this.channel.position((long) (rootPage - 1) * this.pageSize)
         .read(pageBuffer);
     return new BTreePage(pageBuffer.duplicate().clear());
+  }
+
+  public void setPageOfTable(int pageNumber, Table table) throws IOException {
+    ByteBuffer pageBuffer = ByteBuffer.allocate(this.pageSize);
+    this.channel.position((long) (pageNumber - 1) * this.pageSize)
+        .read(pageBuffer);
+    table.setCurrentPage(new BTreePage(pageBuffer.duplicate().clear()));
   }
 }
