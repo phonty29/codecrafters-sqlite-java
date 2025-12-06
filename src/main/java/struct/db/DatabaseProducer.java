@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class DatabaseProducer {
+
   private static Database database;
 
   public static void init(FileInputStream databaseFile) throws IOException {

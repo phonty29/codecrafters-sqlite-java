@@ -41,8 +41,8 @@ public class BTreePage {
           cells[i] = initCell(cellBuffer);
         }
         if (i > 0) {
-          cellBuffer = pageBuffer.slice(offsets[i-1], offsets[i] - offsets[i-1]);
-          cells[i-1] = initCell(cellBuffer);
+          cellBuffer = pageBuffer.slice(offsets[i - 1], offsets[i] - offsets[i - 1]);
+          cells[i - 1] = initCell(cellBuffer);
           if (i == cellsCount - 1) {
             cellBuffer = pageBuffer.position(offsets[i]).slice();
             cells[i] = initCell(cellBuffer);
@@ -63,7 +63,8 @@ public class BTreePage {
     return switch (this.pageHeader.pageType) {
       case BTreePageType.INT_TABLE -> new InteriorTableCell(cellBuffer);
       case BTreePageType.LEAF_TABLE -> new LeafTableCell(cellBuffer);
-      default -> throw new IllegalStateException("Not supported page type: " + this.pageHeader.pageType);
+      default ->
+          throw new IllegalStateException("Not supported page type: " + this.pageHeader.pageType);
     };
   }
 
@@ -73,14 +74,18 @@ public class BTreePage {
 
   public Cell[] getCells() {
     return switch (this.pageHeader.pageType) {
-      case LEAF_TABLE -> Arrays.stream(this.cells).map(cell -> (LeafTableCell) cell).toArray(LeafTableCell[]::new);
-      case INT_TABLE -> Arrays.stream(this.cells).map(cell -> (InteriorTableCell) cell).toArray(InteriorTableCell[]::new);
-      default -> throw new IllegalStateException("Not supported page type: " + this.pageHeader.pageType);
+      case LEAF_TABLE ->
+          Arrays.stream(this.cells).map(cell -> (LeafTableCell) cell).toArray(LeafTableCell[]::new);
+      case INT_TABLE -> Arrays.stream(this.cells).map(cell -> (InteriorTableCell) cell)
+          .toArray(InteriorTableCell[]::new);
+      default ->
+          throw new IllegalStateException("Not supported page type: " + this.pageHeader.pageType);
     };
   }
 
   public int getRightmostPointer() {
-    if (this.pageHeader.pageType.equals(BTreePageType.INT_TABLE) && this.rightmostPointer.isPresent()) {
+    if (this.pageHeader.pageType.equals(BTreePageType.INT_TABLE)
+        && this.rightmostPointer.isPresent()) {
       return this.rightmostPointer.getAsInt();
     }
     throw new IllegalStateException("Not an interior table page");

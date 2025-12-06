@@ -55,13 +55,15 @@ public class Table {
   }
 
   public int getRows() {
-    if (Objects.nonNull(this.rootPage) && this.rootPage.getPageHeader().pageType().equals(BTreePageType.LEAF_TABLE)) {
+    if (Objects.nonNull(this.rootPage) && this.rootPage.getPageHeader().pageType()
+        .equals(BTreePageType.LEAF_TABLE)) {
       return this.rootPage.getPageHeader().cellsCount();
     }
     throw new IllegalStateException("Root page is not a leaf table");
   }
 
-  public List<String> getByColumns(List<String> queriedColumns, Map<String, List<Function<String, Boolean>>> filters) {
+  public List<String> getByColumns(List<String> queriedColumns,
+      Map<String, List<Function<String, Boolean>>> filters) {
     List<String> orderedColumns = this.sqlProcessor.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;
@@ -75,12 +77,14 @@ public class Table {
     return switch (this.currentPage.getPageHeader().pageType()) {
       case LEAF_TABLE -> getByColumnsFromLeafTable(columnOrders, filters);
       case INT_TABLE -> getByColumnsFromInteriorTable(columnOrders, filters);
-      default -> throw new IllegalStateException("Not supported page type: " + this.currentPage.getPageHeader().pageType());
+      default -> throw new IllegalStateException(
+          "Not supported page type: " + this.currentPage.getPageHeader().pageType());
     };
   }
 
   /**
    * Returns values from table interior page (full-scan)
+   *
    * @param columns - the order of columns in the table b-tree page structure
    * @return list of values from all leaf table pages
    */
@@ -98,6 +102,7 @@ public class Table {
 
   /**
    * Returns values from table leaf page
+   *
    * @param columns - the order of columns in the table b-tree page structure
    * @return list of values from leaf table cells
    */
