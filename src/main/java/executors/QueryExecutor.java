@@ -4,7 +4,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import query_processor.SqlProcessor;
-import struct.Database;
+import struct.db.Database;
+import struct.db.DatabaseProducer;
 
 public class QueryExecutor implements Executor {
 
@@ -15,26 +16,22 @@ public class QueryExecutor implements Executor {
   }
 
   @Override
-  public void execute(String filePath) {
-    try (FileInputStream databaseFile = new FileInputStream(filePath)) {
-      Database database = new Database(databaseFile);
+  public void execute() {
+    var database = DatabaseProducer.get();
 
-      String tableName = queryProcessor.tableName();
-      var table = database.getTable(tableName);
-      database.navigateToTable(table);
+    String tableName = queryProcessor.tableName();
+    var table = database.getTable(tableName);
+    database.navigateToTable(table);
 
-      // select count(*) from table;
-      if (this.queryProcessor.isCount()) {
-        System.out.println(table.getRows());
-      }
+    // select count(*) from table;
+    if (this.queryProcessor.isCount()) {
+      System.out.println(table.getRows());
+    }
 
-      // select [columnName, ...] from [tableName];
-      if (queryProcessor.isColumnsRetrieval()) {
-        List<String> queriedColumns = this.queryProcessor.getColumnNames();
-        table.getByColumns(queriedColumns, this.queryProcessor.filters()).forEach(System.out::println);
-      }
-    } catch (IOException e) {
-      System.out.println("Error reading file: " + e.getMessage());
+    // select [columnName, ...] from [tableName];
+    if (queryProcessor.isColumnsRetrieval()) {
+      List<String> queriedColumns = this.queryProcessor.getColumnNames();
+      table.getByColumns(queriedColumns, this.queryProcessor.filters()).forEach(System.out::println);
     }
   }
 }

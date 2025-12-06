@@ -2,19 +2,16 @@ package executors;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import struct.Database;
+import struct.db.Database;
+import struct.db.DatabaseProducer;
 
 public class DbInfoExecutor implements Executor {
 
   @Override
-  public void execute(String filePath) {
-    try (FileInputStream databaseFile = new FileInputStream(filePath)) {
-      Database database = new Database(databaseFile);
-      // Print results
-      System.out.println("database page size: " + database.getPageSize());
-      System.out.println("number of tables: " + database.getNumberOfTables());
-    } catch (IOException e) {
-      System.out.println("Error reading file: " + e.getMessage());
-    }
+  public void execute() {
+    var database = DatabaseProducer.get();
+    // Print results
+    System.out.println("database page size: " + database.getPageSize());
+    System.out.println("number of tables: " + database.getNumberOfTables());
   }
 }

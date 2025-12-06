@@ -1,10 +1,12 @@
-package struct;
+package struct.db;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import struct.BTreePage;
+import struct.Table;
 import struct.cells.LeafTableCell;
 
 public class Database {
@@ -14,7 +16,7 @@ public class Database {
   private final Table[] tables;
   private final BTreePage bTreePage;
 
-  public Database(FileInputStream databaseFile) throws IOException {
+  protected Database(FileInputStream databaseFile) throws IOException {
     this.channel = databaseFile.getChannel();
     // Read meta from database file headers (first 100 bytes)
     // Skip Magic numbers
@@ -56,24 +58,25 @@ public class Database {
         .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
   }
 
-  public void navigateToTable(Table table) throws IOException {
-    ByteBuffer tablePageBuffer = ByteBuffer.allocate(this.pageSize);
-    this.channel.position((long) (table.meta().rootPageNumber() - 1) * this.pageSize)
-        .read(tablePageBuffer);
-    table.setRootPage(new BTreePage(tablePageBuffer.duplicate().clear()));
+  public void navigateToTable(Table table) {
+    try {
+      ByteBuffer tablePageBuffer = ByteBuffer.allocate(this.pageSize);
+      this.channel.position((long) (table.meta().rootPageNumber() - 1) * this.pageSize)
+          .read(tablePageBuffer);
+      table.setRootPage(new BTreePage(tablePageBuffer.duplicate().clear()));
+    } catch (IOException e) {
+      System.err.println(e.getMessage());
+    }
   }
 
-  public BTreePage getPage(int rootPage) throws IOException {
-    ByteBuffer pageBuffer = ByteBuffer.allocate(this.pageSize);
-    this.channel.position((long) (rootPage - 1) * this.pageSize)
-        .read(pageBuffer);
-    return new BTreePage(pageBuffer.duplicate().clear());
-  }
-
-  public void setPageOfTable(int pageNumber, Table table) throws IOException {
-    ByteBuffer pageBuffer = ByteBuffer.allocate(this.pageSize);
-    this.channel.position((long) (pageNumber - 1) * this.pageSize)
-        .read(pageBuffer);
-    table.setCurrentPage(new BTreePage(pageBuffer.duplicate().clear()));
+  public void navigateToPageOfTable(int pageNumber, Table table) {
+    try {
+      ByteBuffer pageBuffer = ByteBuffer.allocate(this.pageSize);
+      this.channel.position((long) (pageNumber - 1) * this.pageSize)
+          .read(pageBuffer);
+      table.setCurrentPage(new BTreePage(pageBuffer.duplicate().clear()));
+    } catch (IOException e) {
+      System.err.println(e.getMessage());
+    }
   }
 }

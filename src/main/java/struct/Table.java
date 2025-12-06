@@ -14,6 +14,7 @@ import query_processor.parser.ast.Column;
 import query_processor.parser.ast.ColumnType;
 import struct.cells.InteriorTableCell;
 import struct.cells.LeafTableCell;
+import struct.db.Database;
 import utils.ByteUtils;
 
 public class Table {
@@ -60,15 +61,14 @@ public class Table {
     return this.rootPage;
   }
 
-  public int getRows() throws IOException {
+  public int getRows() {
     if (Objects.nonNull(this.rootPage) && this.rootPage.getPageHeader().pageType().equals(BTreePageType.LEAF_TABLE)) {
       return this.rootPage.getPageHeader().cellsCount();
     }
     throw new IllegalStateException("Root page is not a leaf table");
   }
 
-  public List<String> getByColumns(List<String> queriedColumns, Map<String, List<Function<String, Boolean>>> filters)
-      throws IOException {
+  public List<String> getByColumns(List<String> queriedColumns, Map<String, List<Function<String, Boolean>>> filters) {
     List<String> orderedColumns = this.sqlProcessor.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;
@@ -87,14 +87,14 @@ public class Table {
   }
 
   private List<String> getByColumnsForInteriorTable(int[] columns,
-      Map<String, List<Function<String, Boolean>>> filterMap) throws IOException {
+      Map<String, List<Function<String, Boolean>>> filterMap) {
     List<String> data = new ArrayList<>();
     int rightmostPointer = this.currentPage.getRightmostPointer();
     for (var cell : (InteriorTableCell[]) this.currentPage.getCells()) {
-      this.database.setPageOfTable(cell.getRootPage(), this);
+      this.database.navigateToPageOfTable(cell.getRootPage(), this);
       data.addAll(this.getByColumns(columns, filterMap));
     }
-    this.database.setPageOfTable(rightmostPointer, this);
+    this.database.navigateToPageOfTable(rightmostPointer, this);
     data.addAll(this.getByColumns(columns, filterMap));
     return data;
   }
