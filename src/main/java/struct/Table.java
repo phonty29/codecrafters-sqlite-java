@@ -1,6 +1,5 @@
 package struct;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +13,6 @@ import query_processor.parser.ast.Column;
 import query_processor.parser.ast.ColumnType;
 import struct.cells.InteriorTableCell;
 import struct.cells.LeafTableCell;
-import struct.db.Database;
 import struct.db.DatabaseProducer;
 import utils.ByteUtils;
 
@@ -75,64 +73,86 @@ public class Table {
     }
 
     return switch (this.currentPage.getPageHeader().pageType()) {
-      case LEAF_TABLE -> getByColumns(columnOrders, filters);
-      case INT_TABLE -> getByColumnsForInteriorTable(columnOrders, filters);
+      case LEAF_TABLE -> getByColumnsFromLeafTable(columnOrders, filters);
+      case INT_TABLE -> getByColumnsFromInteriorTable(columnOrders, filters);
       default -> throw new IllegalStateException("Not supported page type: " + this.currentPage.getPageHeader().pageType());
     };
   }
 
-  private List<String> getByColumnsForInteriorTable(int[] columns,
+  /**
+   * Returns values from table interior page (full-scan)
+   * @param columns - the order of columns in the table b-tree page structure
+   * @return list of values from all leaf table pages
+   */
+  private List<String> getByColumnsFromInteriorTable(int[] columns,
       Map<String, List<Function<String, Boolean>>> filterMap) {
     List<String> data = new ArrayList<>();
-    int rightmostPointer = this.currentPage.getRightmostPointer();
-    for (var cell : (InteriorTableCell[]) this.currentPage.getCells()) {
+    Arrays.stream((InteriorTableCell[]) this.rootPage.getCells()).forEach(cell -> {
       DatabaseProducer.get().navigateToPageOfTable(cell.getRootPage(), this);
-      data.addAll(this.getByColumns(columns, filterMap));
-    }
-    DatabaseProducer.get().navigateToPageOfTable(rightmostPointer, this);
-    data.addAll(this.getByColumns(columns, filterMap));
+      data.addAll(this.getByColumnsFromLeafTable(columns, filterMap));
+    });
+    DatabaseProducer.get().navigateToPageOfTable(this.rootPage.getRightmostPointer(), this);
+    data.addAll(this.getByColumnsFromLeafTable(columns, filterMap));
     return data;
   }
 
   /**
+   * Returns values from table leaf page
    * @param columns - the order of columns in the table b-tree page structure
-   * @return list of values from cells
+   * @return list of values from leaf table cells
    */
-  private List<String> getByColumns(int[] columns,
-      Map<String, List<Function<String, Boolean>>> filterMap) {
-    if (!(this.currentPage.getCells() instanceof LeafTableCell[])) {
+  private List<String> getByColumnsFromLeafTable(
+      int[] columns,
+      Map<String, List<Function<String, Boolean>>> filterMap
+  ) {
+    if (!(currentPage.getCells() instanceof LeafTableCell[] leafCells)) {
       throw new IllegalStateException("Current page is not a leaf table");
     }
 
-    return Arrays.stream((LeafTableCell[]) this.currentPage.getCells())
-        .filter(cell -> {
-          boolean condition = true;
-          for (int i = 0; i < this.columns.length; i++) {
-            String filterKey = this.columns[i].name();
-            List<Function<String, Boolean>> filters = filterMap.get(filterKey);
-            if (Objects.isNull(filters)) {
-              continue;
-            }
-            String value = getValueOfColumn(i, cell.getRecordBody().values()[i]);
-            condition = filters.stream().allMatch(filter -> filter.apply(value));
-          }
-          return condition;
-        })
-        .map(cell ->
-            Arrays.stream(columns)
-                .mapToObj(col -> {
-                  if (this.columns[col].name().contentEquals("id") && this.columns[col].type().equals(
-                      ColumnType.INTEGER)) {
-                    return Integer.toString(cell.getRowId());
-                  }
-                  return getValueOfColumn(col, cell.getRecordBody().values()[col]);
-                })
-                .collect(Collectors.joining("|"))
-        )
+    return Arrays.stream(leafCells)
+        .filter(cell -> matchesFilters(cell, filterMap))
+        .map(cell -> formatRowColumns(cell, columns))
         .toList();
   }
 
-  private String getValueOfColumn(int col, byte[] value) {
+  private boolean matchesFilters(
+      LeafTableCell cell,
+      Map<String, List<Function<String, Boolean>>> filterMap
+  ) {
+    for (int i = 0; i < this.columns.length; i++) {
+      String columnName = this.columns[i].name();
+      List<Function<String, Boolean>> filters = filterMap.get(columnName);
+
+      if (filters == null) {
+        continue;
+      }
+
+      String value = retrieveValueOfColumn(i, cell.getRecordBody().values()[i]);
+      if (!filters.stream().allMatch(f -> f.apply(value))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private String formatRowColumns(LeafTableCell cell, int[] columns) {
+    return Arrays.stream(columns)
+        .mapToObj(col -> {
+          Column column = this.columns[col];
+
+          // Replace [id] with [rowId] if [id] is not present
+          if (column.name().equals("id") && column.type() == ColumnType.INTEGER
+              && cell.getRecordBody().values()[col].length == 0) {
+            return Integer.toString(cell.getRowId());
+          }
+
+          return retrieveValueOfColumn(col, cell.getRecordBody().values()[col]);
+        })
+        .collect(Collectors.joining("|"));
+  }
+
+
+  private String retrieveValueOfColumn(int col, byte[] value) {
     return switch (this.columns[col].type()) {
       case TEXT -> new String(value);
       case INTEGER -> Long.toString(ByteUtils.toInteger(value).longValue());

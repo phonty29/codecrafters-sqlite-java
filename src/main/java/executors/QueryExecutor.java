@@ -1,10 +1,7 @@
 package executors;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
 import query_processor.SqlProcessor;
-import struct.db.Database;
 import struct.db.DatabaseProducer;
 
 public class QueryExecutor implements Executor {
