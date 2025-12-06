@@ -35,7 +35,7 @@ public class Database {
     this.tables = new Table[numberOfTables];
     LeafTableCell[] schemaCells = (LeafTableCell[]) this.bTreePage.getCells();
     for (int i = 0; i < schemaCells.length; i++) {
-      tables[i] = new Table(this, schemaCells[i]);
+      tables[i] = new Table(schemaCells[i]);
     }
   }
 

@@ -15,24 +15,23 @@ import query_processor.parser.ast.ColumnType;
 import struct.cells.InteriorTableCell;
 import struct.cells.LeafTableCell;
 import struct.db.Database;
+import struct.db.DatabaseProducer;
 import utils.ByteUtils;
 
 public class Table {
 
-  private final Database database; // make global acceptable and singleton
   private final Meta meta;
   private final SqlProcessor sqlProcessor;
   private final Column[] columns;
   private BTreePage rootPage;
   private BTreePage currentPage;
 
-  public Table(Database db, LeafTableCell leafTableCell) {
-    this.database = db;
+  public Table(LeafTableCell schema) {
     // Get meta from sqlite_schema cells
     int tableNameOrder = 2;
     int rootPageOrder = 3;
     int sqlStmtOrder = 4;
-    byte[][] cellValues = leafTableCell.getRecordBody().values();
+    byte[][] cellValues = schema.getRecordBody().values();
     String tableName = new String(cellValues[tableNameOrder]);
     int rootPageNumber = getRootPage(cellValues[rootPageOrder]);
     String sqlStmt = new String(cellValues[sqlStmtOrder]);
@@ -55,10 +54,6 @@ public class Table {
     } else {
       throw new IllegalArgumentException("Cannot change root page");
     }
-  }
-
-  public BTreePage getRootPage() {
-    return this.rootPage;
   }
 
   public int getRows() {
@@ -91,10 +86,10 @@ public class Table {
     List<String> data = new ArrayList<>();
     int rightmostPointer = this.currentPage.getRightmostPointer();
     for (var cell : (InteriorTableCell[]) this.currentPage.getCells()) {
-      this.database.navigateToPageOfTable(cell.getRootPage(), this);
+      DatabaseProducer.get().navigateToPageOfTable(cell.getRootPage(), this);
       data.addAll(this.getByColumns(columns, filterMap));
     }
-    this.database.navigateToPageOfTable(rightmostPointer, this);
+    DatabaseProducer.get().navigateToPageOfTable(rightmostPointer, this);
     data.addAll(this.getByColumns(columns, filterMap));
     return data;
   }
