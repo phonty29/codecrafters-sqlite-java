@@ -1,4 +1,4 @@
-package struct;
+package struct.btree;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;

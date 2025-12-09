@@ -6,10 +6,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
-import struct.BTreePage;
-import struct.Index;
-import struct.SchemaType;
-import struct.Table;
+import struct.btree.BTreePage;
+import struct.schema.Index;
+import struct.schema.SchemaType;
+import struct.schema.Table;
 import struct.cells.LeafTableCell;
 
 public class Database {
@@ -63,6 +63,10 @@ public class Database {
 
   public List<Table> getTables() {
     return this.tables;
+  }
+
+  public List<Index> getIndexes() {
+    return this.indexes;
   }
 
   public Table getTable(String tableName) {

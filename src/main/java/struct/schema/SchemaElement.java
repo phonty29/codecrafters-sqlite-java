@@ -1,4 +1,4 @@
-package struct;
+package struct.schema;
 
 import java.nio.ByteBuffer;
 
@@ -12,7 +12,7 @@ public interface SchemaElement {
           ((rootPageBytes[1] & 0xFF) << 8) |
           (rootPageBytes[2] & 0xFF);
       case 4 -> ByteBuffer.wrap(rootPageBytes).getInt();
-      default -> throw new IllegalStateException("Rootpage couldn't be cast to integer type");
+      default -> throw new IllegalStateException("Root page couldn't be cast to integer type");
     };
   }
 }

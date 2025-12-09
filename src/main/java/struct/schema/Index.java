@@ -1,4 +1,4 @@
-package struct;
+package struct.schema;
 
 import struct.cells.LeafTableCell;
 

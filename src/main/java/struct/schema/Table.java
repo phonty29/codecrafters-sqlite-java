@@ -1,4 +1,4 @@
-package struct;
+package struct.schema;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 import query_processor.SqlProcessor;
 import query_processor.parser.ast.Column;
 import query_processor.parser.ast.ColumnType;
+import struct.btree.BTreePage;
+import struct.btree.BTreePageType;
 import struct.cells.InteriorTableCell;
 import struct.cells.LeafTableCell;
 import struct.db.DatabaseProducer;
@@ -63,6 +65,7 @@ public class Table implements SchemaElement {
 
   public List<String> getByColumns(List<String> queriedColumns,
       Map<String, List<Function<String, Boolean>>> filters) {
+    DatabaseProducer.get().getIndexes().forEach(index -> System.out.println(index.getMeta()));
     List<String> orderedColumns = this.sqlProcessor.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;
