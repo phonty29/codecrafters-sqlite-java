@@ -3,6 +3,7 @@ package struct;
 import struct.cells.LeafTableCell;
 
 public class Index implements SchemaElement {
+
   private final Meta meta;
 
   public Index(LeafTableCell cell) {

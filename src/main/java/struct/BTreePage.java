@@ -39,9 +39,9 @@ public class BTreePage {
     }
     Arrays.sort(offsets);
     // Initialize cells
-    for (int i = offsets.length-1; i >= 0; i--) {
+    for (int i = offsets.length - 1; i >= 0; i--) {
       ByteBuffer cellBuffer;
-      if (i == offsets.length-1) {
+      if (i == offsets.length - 1) {
         cellBuffer = pageBuffer.position(offsets[i]).slice();
       } else {
         cellBuffer = pageBuffer.slice(offsets[i], offsets[i + 1] - offsets[i]);
