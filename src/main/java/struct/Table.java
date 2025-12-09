@@ -18,7 +18,6 @@ import utils.ByteUtils;
 
 public class Table {
 
-  private final int rowId;
   private final Meta meta;
   private final SqlProcessor sqlProcessor;
   private final Column[] columns;
@@ -26,7 +25,6 @@ public class Table {
   private BTreePage currentPage;
 
   public Table(LeafTableCell schema) {
-    this.rowId = schema.getRowId();
     // Get meta from sqlite_schema cells
     int tableNameOrder = 2;
     int rootPageOrder = 3;
@@ -44,10 +42,6 @@ public class Table {
 
   public void setCurrentPage(BTreePage currentPage) {
     this.currentPage = currentPage;
-  }
-
-  public int getRowId() {
-    return this.rowId;
   }
 
   public void setRootPage(BTreePage rootPage) {

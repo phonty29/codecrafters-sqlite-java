@@ -39,7 +39,6 @@ public class Database {
     for (int i = 0; i < schemaCells.length; i++) {
       tables[i] = new Table(schemaCells[i]);
     }
-    Arrays.sort(tables, Comparator.comparingInt(Table::getRowId));
   }
 
   public int getNumberOfTables() {

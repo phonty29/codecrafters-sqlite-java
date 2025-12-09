@@ -30,7 +30,6 @@ public class SqlProcessor {
     SqlLexer lexer = new SqlLexer(query);
     List<Token> tokens = lexer.tokenize();
     SqlParser parser = new SqlParser(tokens);
-    System.out.println("Query: " + query);
     this.queryTree = switch (query) {
       case String q when q.toLowerCase().startsWith("select") -> parser.parseSelect();
       case String q when q.toLowerCase().startsWith("create table") -> parser.parseCreateTable();

@@ -2,6 +2,7 @@ package struct;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.OptionalInt;
 import struct.cells.Cell;
 import struct.cells.InteriorTableCell;
@@ -47,6 +48,7 @@ public class BTreePage {
       }
       cells[i] = initCell(cellBuffer);
     }
+    Arrays.sort(cells, Comparator.comparingInt(Cell::getRowId));
   }
 
   private Cell initCell(ByteBuffer cellBuffer) {
