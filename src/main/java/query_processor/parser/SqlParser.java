@@ -10,7 +10,8 @@ import query_processor.parser.ast.BinaryOp;
 import query_processor.parser.ast.Column;
 import query_processor.parser.ast.ColumnType;
 import query_processor.parser.ast.Constraint;
-import query_processor.parser.ast.CreateStmt;
+import query_processor.parser.ast.CreateIndexStmt;
+import query_processor.parser.ast.CreateTableStmt;
 import query_processor.parser.ast.Expression;
 import query_processor.parser.ast.FromItem;
 import query_processor.parser.ast.FunctionCall;
@@ -72,12 +73,32 @@ public class SqlParser {
     throw new RuntimeException("Parse error at " + t().pos + ": " + err + " got " + t());
   }
 
-  public CreateStmt parseCreateStmt() {
+  public CreateTableStmt parseCreateTable() {
     consume(TokenType.KEYWORD_CREATE, "expected CREATE");
     consume(TokenType.KEYWORD_TABLE, "expected TABLE after CREATE");
     Token name = consume(TokenType.IDENT, "expected table name");
     List<Column> columns = parseColumns();
-    return new CreateStmt(name.text, columns);
+    return new CreateTableStmt(name.text, columns);
+  }
+
+  public CreateIndexStmt parseCreateIndex() {
+    consume(TokenType.KEYWORD_CREATE, "expected CREATE");
+    consume(TokenType.KEYWORD_INDEX, "expected INDEX after CREATE");
+    Token indexName = consume(TokenType.IDENT, "expected index name");
+    consume(TokenType.KEYWORD_ON, "expected ON after INDEX");
+    Token tableName = consume(TokenType.IDENT, "expected table name");
+    List<String> columns = parseIndexedColumns();
+    return new CreateIndexStmt(indexName.text, tableName.text, columns);
+  }
+
+  private List<String> parseIndexedColumns() {
+    consume(TokenType.LPAREN, "expected ( after CREATE TABLE [tableName]");
+    List<String> columns = new ArrayList<>();
+    do {
+      Token columnName = consume(TokenType.IDENT, "Expected IDENT [columnName]");
+      columns.add(columnName.text);
+    } while (match(TokenType.COMMA));
+    return columns;
   }
 
   private List<Column> parseColumns() {

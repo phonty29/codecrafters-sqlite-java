@@ -9,7 +9,7 @@ import query_processor.lexer.Token;
 import query_processor.parser.SqlParser;
 import query_processor.parser.ast.BinaryOp;
 import query_processor.parser.ast.Column;
-import query_processor.parser.ast.CreateStmt;
+import query_processor.parser.ast.CreateTableStmt;
 import query_processor.parser.ast.FunctionCall;
 import query_processor.parser.ast.Identifier;
 import query_processor.parser.ast.Literal;
@@ -30,9 +30,11 @@ public class SqlProcessor {
     SqlLexer lexer = new SqlLexer(query);
     List<Token> tokens = lexer.tokenize();
     SqlParser parser = new SqlParser(tokens);
+    System.out.println("Query: " + query);
     this.queryTree = switch (query) {
       case String q when q.toLowerCase().startsWith("select") -> parser.parseSelect();
-      case String q when q.toLowerCase().startsWith("create") -> parser.parseCreateStmt();
+      case String q when q.toLowerCase().startsWith("create table") -> parser.parseCreateTable();
+      case String q when q.toLowerCase().startsWith("create index") -> parser.parseCreateIndex();
       default -> throw new IllegalArgumentException("Unknown query: " + query);
     };
   }
@@ -45,9 +47,9 @@ public class SqlProcessor {
         "Unknown query type: " + this.queryTree.getClass().getSimpleName());
   }
 
-  private CreateStmt create() {
-    if (this.queryTree instanceof CreateStmt) {
-      return (CreateStmt) this.queryTree;
+  private CreateTableStmt create() {
+    if (this.queryTree instanceof CreateTableStmt) {
+      return (CreateTableStmt) this.queryTree;
     }
     throw new IllegalStateException(
         "Unknown query type: " + this.queryTree.getClass().getSimpleName());
@@ -78,7 +80,7 @@ public class SqlProcessor {
           .stream()
           .map(i -> ((Identifier) i.expr()).name())
           .toList();
-    } else if (this.queryTree instanceof CreateStmt) {
+    } else if (this.queryTree instanceof CreateTableStmt) {
       return create()
           .columns()
           .stream()
@@ -110,7 +112,7 @@ public class SqlProcessor {
   }
 
   public Column[] getColumns() {
-    if (this.queryTree instanceof CreateStmt) {
+    if (this.queryTree instanceof CreateTableStmt) {
       return create()
           .columns()
           .toArray(Column[]::new);

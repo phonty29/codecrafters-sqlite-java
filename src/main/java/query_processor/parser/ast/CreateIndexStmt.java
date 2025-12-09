@@ -2,9 +2,10 @@ package query_processor.parser.ast;
 
 import java.util.List;
 
-public record CreateStmt(
+public record CreateIndexStmt(
+    String index,
     String tableName,
-    List<Column> columns
+    List<String> columns
 ) implements Statement {
 
 }

@@ -33,6 +33,8 @@ public class SqlLexer {
     KEYWORDS.put("AUTOINCREMENT", TokenType.KEYWORD_AUTOINCREMENT);
     KEYWORDS.put("DEFAULT", TokenType.KEYWORD_DEFAULT);
     KEYWORDS.put("UNIQUE", TokenType.KEYWORD_UNIQUE);
+    KEYWORDS.put("INDEX", TokenType.KEYWORD_INDEX);
+    KEYWORDS.put("ON", TokenType.KEYWORD_ON);
     KEYWORDS.put("INTEGER", TokenType.TYPE_INTEGER);
     KEYWORDS.put("TEXT", TokenType.TYPE_TEXT);
     KEYWORDS.put("REAL", TokenType.TYPE_REAL);
