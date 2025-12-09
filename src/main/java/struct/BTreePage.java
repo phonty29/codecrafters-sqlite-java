@@ -32,30 +32,20 @@ public class BTreePage {
     // Start reading the cell pointers array
     ByteBuffer cellPointersBuffer = pageBuffer.slice(pageBuffer.position(), 2 * cellsCount);
     short[] offsets = new short[cellsCount];
+    // Collect offsets from the cell pointers array
     for (int i = 0; i < cellsCount; i++) {
       offsets[i] = cellPointersBuffer.getShort();
+    }
+    Arrays.sort(offsets);
+    // Initialize cells
+    for (int i = offsets.length-1; i >= 0; i--) {
       ByteBuffer cellBuffer;
-      if (startOfTheCellContentArea == offsets[0]) {
-        if (cellsCount == 1) {
-          cellBuffer = pageBuffer.position(offsets[i]).slice();
-          cells[i] = initCell(cellBuffer);
-        }
-        if (i > 0) {
-          cellBuffer = pageBuffer.slice(offsets[i - 1], offsets[i] - offsets[i - 1]);
-          cells[i - 1] = initCell(cellBuffer);
-          if (i == cellsCount - 1) {
-            cellBuffer = pageBuffer.position(offsets[i]).slice();
-            cells[i] = initCell(cellBuffer);
-          }
-        }
+      if (i == offsets.length-1) {
+        cellBuffer = pageBuffer.position(offsets[i]).slice();
       } else {
-        if (i == 0) {
-          cellBuffer = pageBuffer.position(offsets[i]).slice();
-        } else {
-          cellBuffer = pageBuffer.slice(offsets[i], offsets[i - 1] - offsets[i]);
-        }
-        cells[i] = initCell(cellBuffer);
+        cellBuffer = pageBuffer.slice(offsets[i], offsets[i + 1] - offsets[i]);
       }
+      cells[i] = initCell(cellBuffer);
     }
   }
 

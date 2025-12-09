@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import struct.BTreePage;
 import struct.Table;
 import struct.cells.LeafTableCell;
@@ -37,6 +39,7 @@ public class Database {
     for (int i = 0; i < schemaCells.length; i++) {
       tables[i] = new Table(schemaCells[i]);
     }
+    Arrays.sort(tables, Comparator.comparingInt(Table::getRowId));
   }
 
   public int getNumberOfTables() {

@@ -1,6 +1,7 @@
 package executors;
 
 import java.util.Arrays;
+import java.util.Collections;
 import struct.db.DatabaseProducer;
 
 public class TableExecutor implements Executor {
