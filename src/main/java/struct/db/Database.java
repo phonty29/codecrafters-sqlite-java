@@ -4,10 +4,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import struct.BTreePage;
+import struct.Index;
+import struct.SchemaType;
 import struct.Table;
 import struct.cells.LeafTableCell;
 
@@ -15,7 +19,8 @@ public class Database {
 
   private final FileChannel channel;
   private final int pageSize;
-  private final Table[] tables;
+  private final List<Table> tables = new ArrayList<>();
+  private final List<Index> indexes = new ArrayList<>();
   private final BTreePage bTreePage;
 
   protected Database(FileInputStream databaseFile) throws IOException {
@@ -33,28 +38,38 @@ public class Database {
     this.bTreePage = new BTreePage(pageBuffer.position(100));
 
     // Initialize tables with meta from sqlite_schema
-    int numberOfTables = this.bTreePage.getPageHeader().cellsCount();
-    this.tables = new Table[numberOfTables];
     LeafTableCell[] schemaCells = (LeafTableCell[]) this.bTreePage.getCells();
-    for (int i = 0; i < schemaCells.length; i++) {
-      tables[i] = new Table(schemaCells[i]);
+    for (LeafTableCell schemaCell : schemaCells) {
+      switch (schemaType(schemaCell)) {
+        case TABLE -> this.tables.add(new Table(schemaCell));
+        case INDEX -> this.indexes.add(new Index(schemaCell));
+      }
     }
   }
 
+  private SchemaType schemaType(LeafTableCell cell) {
+    String schemaType = new String(cell.getRecordBody().values()[0]);
+    return SchemaType.fromName(schemaType);
+  }
+
   public int getNumberOfTables() {
-    return this.bTreePage.getPageHeader().cellsCount();
+    return this.tables.size();
+  }
+
+  public int getNumberOfIndexes() {
+    return this.indexes.size();
   }
 
   public int getPageSize() {
     return this.pageSize;
   }
 
-  public Table[] getTables() {
+  public List<Table> getTables() {
     return this.tables;
   }
 
   public Table getTable(String tableName) {
-    return Arrays.stream(this.tables)
+    return this.tables.stream()
         .filter(t -> t.meta().name().contains(tableName))
         .findFirst()
         .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
