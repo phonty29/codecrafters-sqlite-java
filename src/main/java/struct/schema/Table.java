@@ -24,6 +24,7 @@ public class Table implements SchemaElement {
   private final Column[] columns;
   private BTreePage rootPage;
   private BTreePage currentPage;
+  private Index index;
 
   public Table(LeafTableCell schema) {
     // Get meta from sqlite_schema cells
@@ -39,6 +40,10 @@ public class Table implements SchemaElement {
     // Init table structure
     this.sqlProcessor = new SqlProcessor(this.meta.sqlStmt);
     this.columns = sqlProcessor.getColumns();
+  }
+
+  public void setIndex(Index index) {
+    this.index = index;
   }
 
   @Override
@@ -81,6 +86,9 @@ public class Table implements SchemaElement {
 
   public List<String> getByColumns(List<String> queriedColumns,
       Map<String, List<Function<String, Boolean>>> filters) {
+    boolean useIndex = Objects.nonNull(this.index)
+        && filters.keySet().stream().anyMatch(col -> this.index.getColumns().contains(col));
+
     List<String> orderedColumns = this.sqlProcessor.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;

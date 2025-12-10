@@ -43,6 +43,14 @@ public class Database {
         case INDEX -> this.indexes.add(new Index(schemaCell));
       }
     }
+    // Inject indexes to tables
+    for (var idx : this.indexes) {
+      this.tables.forEach(table -> {
+        if (table.meta().name().contentEquals(idx.meta().tableName())) {
+          table.setIndex(idx);
+        }
+      });
+    }
   }
 
   private SchemaType schemaType(LeafTableCell cell) {

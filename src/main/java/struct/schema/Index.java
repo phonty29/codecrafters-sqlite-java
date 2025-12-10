@@ -34,6 +34,10 @@ public class Index implements SchemaElement {
     this.columns.addAll(this.sqlProcessor.getIndexedColumns());
   }
 
+  public List<String> getColumns() {
+    return this.columns;
+  }
+
   @Override
   public void setCurrentPage(BTreePage currentPage) {
     validatePage(currentPage);
