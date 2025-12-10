@@ -43,7 +43,14 @@ public class Table implements SchemaElement {
   }
 
   public void setIndex(Index index) {
+    validateIndex(index);
     this.index = index;
+  }
+
+  private void validateIndex(Index index) {
+    if (Objects.isNull(index) || !index.meta().tableName().contentEquals(this.meta.name)) {
+      throw new IllegalArgumentException("Invalid index for this table: " + index.meta().name());
+    }
   }
 
   @Override
@@ -86,8 +93,11 @@ public class Table implements SchemaElement {
 
   public List<String> getByColumns(List<String> queriedColumns,
       Map<String, List<Function<String, Boolean>>> filters) {
-    boolean useIndex = Objects.nonNull(this.index)
-        && filters.keySet().stream().anyMatch(col -> this.index.getColumns().contains(col));
+//    boolean useIndex = Objects.nonNull(this.index)
+//        && filters.keySet().stream().anyMatch(col -> this.index.getColumns().contains(col));
+//    if (useIndex) {
+//      this.index.getAll();
+//    }
 
     List<String> orderedColumns = this.sqlProcessor.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
@@ -99,7 +109,7 @@ public class Table implements SchemaElement {
       }
     }
 
-    return switch (this.currentPage.getPageHeader().pageType()) {
+    return switch (this.rootPage.getPageHeader().pageType()) {
       case LEAF_TABLE -> getByColumnsFromLeafTable(columnOrders, filters);
       case INT_TABLE -> getByColumnsFromInteriorTable(columnOrders, filters);
       default -> throw new IllegalStateException(

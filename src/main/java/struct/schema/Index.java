@@ -1,7 +1,10 @@
 package struct.schema;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import query_processor.SqlProcessor;
 import struct.btree.BTreePage;
@@ -13,6 +16,7 @@ public class Index implements SchemaElement {
   private final Meta meta;
   private final SqlProcessor sqlProcessor;
   private final List<String> columns = new ArrayList<>();
+  private final List<Row> rows = new ArrayList<>();
   private BTreePage currentPage;
   private BTreePage rootPage;
 
@@ -32,6 +36,22 @@ public class Index implements SchemaElement {
     // Process `create index` query
     this.sqlProcessor = new SqlProcessor(sqlStmt);
     this.columns.addAll(this.sqlProcessor.getIndexedColumns());
+  }
+
+  public List<Row> getRows() {
+    return switch (this.rootPage.getPageHeader().pageType()) {
+      case INT_INDEX -> getRowsFromInteriorPages();
+      case LEAF_INDEX -> getRowsFromLeafPages();
+      default -> throw new IllegalStateException("Unexpected page type for index: " + this.rootPage.getPageHeader().pageType());
+    };
+  }
+
+  private List<Row> getRowsFromInteriorPages() {
+    return this.rows;
+  }
+
+  private List<Row> getRowsFromLeafPages() {
+    return this.rows;
   }
 
   public List<String> getColumns() {
@@ -77,6 +97,13 @@ public class Index implements SchemaElement {
       String tableName,
       int rootPageNumber,
       String createStmt
+  ) {
+
+  }
+
+  public record Row(
+      int rowId,
+      Map<String, String> values
   ) {
 
   }
