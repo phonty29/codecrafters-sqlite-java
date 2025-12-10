@@ -41,17 +41,33 @@ public class Table implements SchemaElement {
     this.columns = sqlProcessor.getColumns();
   }
 
+  @Override
   public void setCurrentPage(BTreePage currentPage) {
+    validatePage(currentPage);
     this.currentPage = currentPage;
   }
 
+  @Override
   public void setRootPage(BTreePage rootPage) {
     // Root page can be set only once
     if (Objects.isNull(this.rootPage)) {
+      validatePage(rootPage);
       this.rootPage = rootPage;
       this.currentPage = rootPage;
     } else {
       throw new IllegalArgumentException("Cannot change root page");
+    }
+  }
+
+  @Override
+  public int getRootPageNumber() {
+    return this.meta.rootPageNumber();
+  }
+
+  private void validatePage(BTreePage page) {
+    if (Objects.isNull(page) || (!page.getPageHeader().pageType().equals(BTreePageType.INT_TABLE)
+        && !page.getPageHeader().pageType().equals(BTreePageType.LEAF_TABLE))) {
+      throw new IllegalArgumentException("Invalid page type for table");
     }
   }
 
@@ -65,7 +81,6 @@ public class Table implements SchemaElement {
 
   public List<String> getByColumns(List<String> queriedColumns,
       Map<String, List<Function<String, Boolean>>> filters) {
-    DatabaseProducer.get().getIndexes().forEach(index -> System.out.println(index.getMeta()));
     List<String> orderedColumns = this.sqlProcessor.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;

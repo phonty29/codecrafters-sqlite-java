@@ -9,6 +9,7 @@ import query_processor.lexer.Token;
 import query_processor.parser.SqlParser;
 import query_processor.parser.ast.BinaryOp;
 import query_processor.parser.ast.Column;
+import query_processor.parser.ast.CreateIndexStmt;
 import query_processor.parser.ast.CreateTableStmt;
 import query_processor.parser.ast.FunctionCall;
 import query_processor.parser.ast.Identifier;
@@ -49,6 +50,14 @@ public class SqlProcessor {
   private CreateTableStmt create() {
     if (this.queryTree instanceof CreateTableStmt) {
       return (CreateTableStmt) this.queryTree;
+    }
+    throw new IllegalStateException(
+        "Unknown query type: " + this.queryTree.getClass().getSimpleName());
+  }
+
+  private CreateIndexStmt createIndex() {
+    if (this.queryTree instanceof CreateIndexStmt) {
+      return (CreateIndexStmt) this.queryTree;
     }
     throw new IllegalStateException(
         "Unknown query type: " + this.queryTree.getClass().getSimpleName());
@@ -115,6 +124,15 @@ public class SqlProcessor {
       return create()
           .columns()
           .toArray(Column[]::new);
+    } else {
+      throw new IllegalStateException(
+          "Unknown query type: " + this.queryTree.getClass().getSimpleName());
+    }
+  }
+
+  public List<String> getIndexedColumns() {
+    if (this.queryTree instanceof CreateIndexStmt) {
+      return createIndex().columns();
     } else {
       throw new IllegalStateException(
           "Unknown query type: " + this.queryTree.getClass().getSimpleName());

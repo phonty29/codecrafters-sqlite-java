@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import struct.btree.BTreePage;
 import struct.schema.Index;
+import struct.schema.SchemaElement;
 import struct.schema.SchemaType;
 import struct.schema.Table;
 import struct.cells.LeafTableCell;
@@ -76,12 +77,12 @@ public class Database {
         .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
   }
 
-  public void navigateToTable(Table table) {
+  public void navigateTo(SchemaElement element) {
     try {
-      ByteBuffer tablePageBuffer = ByteBuffer.allocate(this.pageSize);
-      this.channel.position((long) (table.meta().rootPageNumber() - 1) * this.pageSize)
-          .read(tablePageBuffer);
-      table.setRootPage(new BTreePage(tablePageBuffer.duplicate().clear()));
+      ByteBuffer pageBuffer = ByteBuffer.allocate(this.pageSize);
+      this.channel.position((long) (element.getRootPageNumber() - 1) * this.pageSize)
+          .read(pageBuffer);
+      element.setRootPage(new BTreePage(pageBuffer.duplicate().clear()));
     } catch (IOException e) {
       System.err.println(e.getMessage());
     }

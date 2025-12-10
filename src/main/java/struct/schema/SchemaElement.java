@@ -1,6 +1,7 @@
 package struct.schema;
 
 import java.nio.ByteBuffer;
+import struct.btree.BTreePage;
 
 public interface SchemaElement {
 
@@ -15,4 +16,10 @@ public interface SchemaElement {
       default -> throw new IllegalStateException("Root page couldn't be cast to integer type");
     };
   }
+
+  void setCurrentPage(BTreePage currentPage);
+
+  void setRootPage(BTreePage rootPage);
+
+  int getRootPageNumber();
 }

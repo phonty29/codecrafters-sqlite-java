@@ -18,7 +18,7 @@ public class QueryExecutor implements Executor {
 
     String tableName = queryProcessor.tableName();
     var table = database.getTable(tableName);
-    database.navigateToTable(table);
+    database.navigateTo(table);
 
     // select count(*) from table;
     if (this.queryProcessor.isCount()) {
