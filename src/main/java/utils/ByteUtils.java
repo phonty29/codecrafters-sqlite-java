@@ -9,6 +9,9 @@ public class ByteUtils {
       case 0 -> 0;
       case 1 -> ByteBuffer.wrap(bytes).get();
       case 2 -> ByteBuffer.wrap(bytes).getShort();
+      case 3 -> ((bytes[0] & 0xFF) << 16) |
+          ((bytes[1] & 0xFF) << 8) |
+          (bytes[2] & 0xFF);
       case 4 -> ByteBuffer.wrap(bytes).getInt();
       case 8 -> ByteBuffer.wrap(bytes).getLong();
       default -> throw new IllegalStateException("Unexpected value: " + bytes.length);

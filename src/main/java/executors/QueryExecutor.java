@@ -22,7 +22,7 @@ public class QueryExecutor implements Executor {
 
     // select count(*) from table;
     if (this.queryProcessor.isCount()) {
-      System.out.println(table.getRows());
+      System.out.println(table.getCellsCount());
     }
 
     // select [columnName, ...] from [tableName];

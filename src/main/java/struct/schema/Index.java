@@ -9,7 +9,11 @@ import java.util.Objects;
 import query_processor.SqlProcessor;
 import struct.btree.BTreePage;
 import struct.btree.BTreePageType;
+import struct.cells.InteriorIndexCell;
+import struct.cells.LeafIndexCell;
 import struct.cells.LeafTableCell;
+import struct.db.DatabaseProducer;
+import utils.ByteUtils;
 
 public class Index implements SchemaElement {
 
@@ -38,20 +42,54 @@ public class Index implements SchemaElement {
     this.columns.addAll(this.sqlProcessor.getIndexedColumns());
   }
 
-  public List<Row> getRows() {
-    return switch (this.rootPage.getPageHeader().pageType()) {
-      case INT_INDEX -> getRowsFromInteriorPages();
-      case LEAF_INDEX -> getRowsFromLeafPages();
+  public List<Row> iterate() {
+    return switch (this.currentPage.getPageHeader().pageType()) {
+      case INT_INDEX -> iterateInteriorPages();
+      case LEAF_INDEX -> iterateLeafPages();
       default -> throw new IllegalStateException("Unexpected page type for index: " + this.rootPage.getPageHeader().pageType());
     };
   }
 
-  private List<Row> getRowsFromInteriorPages() {
+  private List<Row> iterateInteriorPages() {
+    if (!(this.currentPage.getCells() instanceof InteriorIndexCell[])) {
+      throw new IllegalStateException("Current page is not an interior index page");
+    }
+
+    BTreePage interiorPage = this.currentPage;
+    Arrays.stream((InteriorIndexCell[]) this.currentPage.getCells()).forEach(cell -> {
+      DatabaseProducer.get().navigateToPageOfElement(cell.getLeftChildPointer(), this);
+      this.iterate();
+    });
+    DatabaseProducer.get().navigateToPageOfElement(interiorPage.getRightmostPointer(), this);
+    this.iterate();
     return this.rows;
   }
 
-  private List<Row> getRowsFromLeafPages() {
-    return this.rows;
+  private List<Row> iterateLeafPages() {
+    if (!(this.currentPage.getCells() instanceof LeafIndexCell[] leafCells)) {
+      throw new IllegalStateException("Current page is not a leaf index page");
+    }
+
+    return Arrays
+        .stream(leafCells)
+        .map(this::formatIndexRow)
+        .toList();
+  }
+
+  private Row formatIndexRow(LeafIndexCell cell) {
+    if (cell.getRecordBody().values().length - 1 != this.columns.size()) {
+      throw new IllegalStateException("Indexed columns do not match: " + this.columns);
+    }
+    var values = new HashMap<String, String>();
+    for (int i = 0; i < cell.getRecordBody().values().length - 1; i++) {
+      values.put(this.columns.get(i), new String(cell.getRecordBody().values()[i]));
+    }
+    int rowId = ByteUtils.toInteger(cell.getRecordBody().values()[cell.getRecordBody().values().length - 1]).intValue();
+    var row = new Row(rowId, values);
+    if (row.values.get("country").contentEquals("kazakhstan")) {
+      System.out.println("Row: " + row);
+    }
+    return row;
   }
 
   public List<String> getColumns() {

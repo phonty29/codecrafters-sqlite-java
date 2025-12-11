@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.OptionalInt;
 import struct.cells.Cell;
+import struct.cells.InteriorIndexCell;
 import struct.cells.InteriorTableCell;
+import struct.cells.LeafIndexCell;
 import struct.cells.LeafTableCell;
 
 public class BTreePage {
@@ -27,7 +29,7 @@ public class BTreePage {
     // Skip 1 byte
     pageBuffer.position(pageBuffer.position() + 1);
     // Right-most pointer
-    if (bTreePageType.equals(BTreePageType.INT_TABLE)) {
+    if (bTreePageType.equals(BTreePageType.INT_TABLE) || bTreePageType.equals(BTreePageType.INT_INDEX)) {
       this.rightmostPointer = OptionalInt.of(pageBuffer.getInt());
     }
     // Start reading the cell pointers array
@@ -53,10 +55,10 @@ public class BTreePage {
 
   private Cell initCell(ByteBuffer cellBuffer) {
     return switch (this.pageHeader.pageType) {
-      case BTreePageType.INT_TABLE -> new InteriorTableCell(cellBuffer);
-      case BTreePageType.LEAF_TABLE -> new LeafTableCell(cellBuffer);
-      default ->
-          throw new IllegalStateException("Not supported page type: " + this.pageHeader.pageType);
+      case INT_TABLE -> new InteriorTableCell(cellBuffer);
+      case LEAF_TABLE -> new LeafTableCell(cellBuffer);
+      case INT_INDEX -> new InteriorIndexCell(cellBuffer);
+      case LEAF_INDEX -> new LeafIndexCell(cellBuffer);
     };
   }
 
@@ -68,19 +70,22 @@ public class BTreePage {
     return switch (this.pageHeader.pageType) {
       case LEAF_TABLE ->
           Arrays.stream(this.cells).map(cell -> (LeafTableCell) cell).toArray(LeafTableCell[]::new);
-      case INT_TABLE -> Arrays.stream(this.cells).map(cell -> (InteriorTableCell) cell)
-          .toArray(InteriorTableCell[]::new);
-      default ->
-          throw new IllegalStateException("Not supported page type: " + this.pageHeader.pageType);
+      case INT_TABLE ->
+          Arrays.stream(this.cells).map(cell -> (InteriorTableCell) cell).toArray(InteriorTableCell[]::new);
+      case INT_INDEX ->
+          Arrays.stream(this.cells).map(cell -> (InteriorIndexCell) cell).toArray(InteriorIndexCell[]::new);
+      case LEAF_INDEX ->
+          Arrays.stream(this.cells).map(cell -> (LeafIndexCell) cell).toArray(LeafIndexCell[]::new);
     };
   }
 
   public int getRightmostPointer() {
-    if (this.pageHeader.pageType.equals(BTreePageType.INT_TABLE)
+    if ((this.pageHeader.pageType.equals(BTreePageType.INT_TABLE)
+        || this.pageHeader.pageType.equals(BTreePageType.INT_INDEX))
         && this.rightmostPointer.isPresent()) {
       return this.rightmostPointer.getAsInt();
     }
-    throw new IllegalStateException("Not an interior table page");
+    throw new IllegalStateException("Not an interior page");
   }
 
   public record PageHeader(BTreePageType pageType, int cellsCount) {

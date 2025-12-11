@@ -3,17 +3,17 @@ package struct.cells;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import utils.ByteUtils;
 
 public class InteriorIndexCell implements IndexCell {
   private final int leftChildPointer;
-  // rowId of the cell, not of the index
-  private final int rowId;
+  private final int payloadSize;
   private final RecordHeader recordHeader;
   private final RecordBody recordBody;
 
   public InteriorIndexCell(ByteBuffer cellBuffer) {
     this.leftChildPointer = cellBuffer.getInt();
-    this.rowId = readVarInt(cellBuffer);
+    this.payloadSize = readVarInt(cellBuffer);
     // Payload
     // Payload Header
     int payloadHeaderSize = readVarInt(cellBuffer);
@@ -36,9 +36,15 @@ public class InteriorIndexCell implements IndexCell {
     this.recordBody = new RecordBody(values);
   }
 
+  public int getLeftChildPointer() {
+    return this.leftChildPointer;
+  }
+
   @Override
   public int getRowId() {
-    return this.rowId;
+    return ByteUtils
+        .toInteger(this.recordBody.values()[this.recordBody.values().length - 1])
+        .intValue();
   }
 
   public RecordHeader getRecordHeader() {

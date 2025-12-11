@@ -4,11 +4,11 @@ import java.nio.ByteBuffer;
 
 public class InteriorTableCell implements Cell {
 
-  private final int rootPage;
+  private final int leftChildPointer;
   private final int rowId;
 
   public InteriorTableCell(ByteBuffer cellBuffer) {
-    this.rootPage = cellBuffer.getInt();
+    this.leftChildPointer = cellBuffer.getInt();
     this.rowId = readVarInt(cellBuffer);
   }
 
@@ -17,7 +17,7 @@ public class InteriorTableCell implements Cell {
     return rowId;
   }
 
-  public int getRootPage() {
-    return rootPage;
+  public int getLeftChildPointer() {
+    return leftChildPointer;
   }
 }

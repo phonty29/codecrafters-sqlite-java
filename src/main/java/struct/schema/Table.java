@@ -83,7 +83,7 @@ public class Table implements SchemaElement {
     }
   }
 
-  public int getRows() {
+  public int getCellsCount() {
     if (Objects.nonNull(this.rootPage) && this.rootPage.getPageHeader().pageType()
         .equals(BTreePageType.LEAF_TABLE)) {
       return this.rootPage.getPageHeader().cellsCount();
@@ -93,11 +93,12 @@ public class Table implements SchemaElement {
 
   public List<String> getByColumns(List<String> queriedColumns,
       Map<String, List<Function<String, Boolean>>> filters) {
-//    boolean useIndex = Objects.nonNull(this.index)
-//        && filters.keySet().stream().anyMatch(col -> this.index.getColumns().contains(col));
-//    if (useIndex) {
-//      this.index.getAll();
-//    }
+    boolean useIndex = Objects.nonNull(this.index)
+        && filters.keySet().stream().anyMatch(col -> this.index.getColumns().contains(col));
+    if (useIndex) {
+      DatabaseProducer.get().navigateTo(index);
+      this.index.iterate();
+    }
 
     List<String> orderedColumns = this.sqlProcessor.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
@@ -127,10 +128,10 @@ public class Table implements SchemaElement {
       Map<String, List<Function<String, Boolean>>> filterMap) {
     List<String> data = new ArrayList<>();
     Arrays.stream((InteriorTableCell[]) this.rootPage.getCells()).forEach(cell -> {
-      DatabaseProducer.get().navigateToPageOfTable(cell.getRootPage(), this);
+      DatabaseProducer.get().navigateToPageOfElement(cell.getLeftChildPointer(), this);
       data.addAll(this.getByColumnsFromLeafTable(columns, filterMap));
     });
-    DatabaseProducer.get().navigateToPageOfTable(this.rootPage.getRightmostPointer(), this);
+    DatabaseProducer.get().navigateToPageOfElement(this.rootPage.getRightmostPointer(), this);
     data.addAll(this.getByColumnsFromLeafTable(columns, filterMap));
     return data;
   }

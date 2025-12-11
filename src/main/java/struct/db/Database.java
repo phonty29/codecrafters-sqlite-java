@@ -96,12 +96,12 @@ public class Database {
     }
   }
 
-  public void navigateToPageOfTable(int pageNumber, Table table) {
+  public void navigateToPageOfElement(int pageNumber, SchemaElement element) {
     try {
       ByteBuffer pageBuffer = ByteBuffer.allocate(this.pageSize);
       this.channel.position((long) (pageNumber - 1) * this.pageSize)
           .read(pageBuffer);
-      table.setCurrentPage(new BTreePage(pageBuffer.duplicate().clear()));
+      element.setCurrentPage(new BTreePage(pageBuffer.duplicate().clear()));
     } catch (IOException e) {
       System.err.println(e.getMessage());
     }
