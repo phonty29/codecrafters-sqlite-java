@@ -119,6 +119,19 @@ public class SqlProcessor {
     return Map.of();
   }
 
+  public String getSearchedValue() {
+    if (this.queryTree instanceof SelectStmt && Objects.nonNull(select().where())) {
+      var where = (BinaryOp) select().where();
+      if (where.left() instanceof Identifier && where.right() instanceof Literal) {
+        if (where.op().contentEquals("=")) {
+          var literal = (Literal) where.right();
+          return (String) literal.value();
+        }
+      }
+    }
+    return "";
+  }
+
   public Column[] getColumns() {
     if (this.queryTree instanceof CreateTableStmt) {
       return create()

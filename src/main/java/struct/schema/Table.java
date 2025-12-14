@@ -92,12 +92,13 @@ public class Table implements SchemaElement {
   }
 
   public List<String> getByColumns(List<String> queriedColumns,
-      Map<String, List<Function<String, Boolean>>> filters) {
+      Map<String, List<Function<String, Boolean>>> filters, String searchValue) {
     boolean useIndex = Objects.nonNull(this.index)
-        && filters.keySet().stream().anyMatch(col -> this.index.getColumns().contains(col));
+        && filters.keySet().stream().anyMatch(col -> this.index.getColumn().contentEquals(col));
     if (useIndex) {
       DatabaseProducer.get().navigateTo(index);
-      this.index.iterate();
+      this.index.setSearchValue(searchValue);
+      this.index.get();
     }
 
     List<String> orderedColumns = this.sqlProcessor.getColumnNames();

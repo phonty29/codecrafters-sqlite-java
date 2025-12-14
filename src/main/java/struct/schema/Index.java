@@ -19,10 +19,11 @@ public class Index implements SchemaElement {
 
   private final Meta meta;
   private final SqlProcessor sqlProcessor;
-  private final List<String> columns = new ArrayList<>();
+  private final String column;
   private final List<Row> rows = new ArrayList<>();
   private BTreePage currentPage;
   private BTreePage rootPage;
+  private String searchValue;
 
   public Index(LeafTableCell cell) {
     // Get meta from sqlite_schema cells
@@ -39,11 +40,15 @@ public class Index implements SchemaElement {
 
     // Process `create index` query
     this.sqlProcessor = new SqlProcessor(sqlStmt);
-    this.columns.addAll(this.sqlProcessor.getIndexedColumns());
+    this.column = this.sqlProcessor.getIndexedColumns().getFirst();
   }
 
-  public List<Row> iterate() {
-    return switch (this.currentPage.getPageHeader().pageType()) {
+  public void setSearchValue(String searchValue) {
+    this.searchValue = searchValue;
+  }
+
+  public void get() {
+    switch (this.currentPage.getPageHeader().pageType()) {
       case INT_INDEX -> iterateInteriorPages();
       case LEAF_INDEX -> iterateLeafPages();
       default -> throw new IllegalStateException("Unexpected page type for index: " + this.rootPage.getPageHeader().pageType());
@@ -58,10 +63,10 @@ public class Index implements SchemaElement {
     BTreePage interiorPage = this.currentPage;
     Arrays.stream((InteriorIndexCell[]) this.currentPage.getCells()).forEach(cell -> {
       DatabaseProducer.get().navigateToPageOfElement(cell.getLeftChildPointer(), this);
-      this.iterate();
+      this.get();
     });
     DatabaseProducer.get().navigateToPageOfElement(interiorPage.getRightmostPointer(), this);
-    this.iterate();
+    this.get();
     return this.rows;
   }
 
@@ -77,23 +82,20 @@ public class Index implements SchemaElement {
   }
 
   private Row formatIndexRow(LeafIndexCell cell) {
-    if (cell.getRecordBody().values().length - 1 != this.columns.size()) {
-      throw new IllegalStateException("Indexed columns do not match: " + this.columns);
-    }
     var values = new HashMap<String, String>();
     for (int i = 0; i < cell.getRecordBody().values().length - 1; i++) {
-      values.put(this.columns.get(i), new String(cell.getRecordBody().values()[i]));
+      values.put(this.column, new String(cell.getRecordBody().values()[i]));
     }
     int rowId = ByteUtils.toInteger(cell.getRecordBody().values()[cell.getRecordBody().values().length - 1]).intValue();
     var row = new Row(rowId, values);
-    if (row.values.get("country").contentEquals("kazakhstan")) {
+    if (row.values.get(this.column).contentEquals(this.searchValue)) {
       System.out.println("Row: " + row);
     }
     return row;
   }
 
-  public List<String> getColumns() {
-    return this.columns;
+  public String getColumn() {
+    return this.column;
   }
 
   @Override
