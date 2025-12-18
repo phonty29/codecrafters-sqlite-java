@@ -9,6 +9,7 @@ import java.util.Objects;
 import query_processor.SqlProcessor;
 import struct.btree.BTreePage;
 import struct.btree.BTreePageType;
+import struct.cells.IndexCell;
 import struct.cells.InteriorIndexCell;
 import struct.cells.LeafIndexCell;
 import struct.cells.LeafTableCell;
@@ -20,7 +21,6 @@ public class Index implements SchemaElement {
   private final Meta meta;
   private final SqlProcessor sqlProcessor;
   private final String column;
-  private final List<Row> rows = new ArrayList<>();
   private BTreePage currentPage;
   private BTreePage rootPage;
   private String searchValue;
@@ -47,30 +47,35 @@ public class Index implements SchemaElement {
     this.searchValue = searchValue;
   }
 
-  public void get() {
-    switch (this.currentPage.getPageHeader().pageType()) {
-      case INT_INDEX -> iterateInteriorPages();
-      case LEAF_INDEX -> iterateLeafPages();
+  public List<Row> get() {
+    return switch (this.currentPage.getPageHeader().pageType()) {
+      case INT_INDEX -> getFromInteriorPages();
+      case LEAF_INDEX -> getFromLeafPages();
       default -> throw new IllegalStateException("Unexpected page type for index: " + this.rootPage.getPageHeader().pageType());
     };
   }
 
-  private List<Row> iterateInteriorPages() {
+  private List<Row> getFromInteriorPages() {
     if (!(this.currentPage.getCells() instanceof InteriorIndexCell[])) {
       throw new IllegalStateException("Current page is not an interior index page");
     }
 
     BTreePage interiorPage = this.currentPage;
+    List<Row> rows = new ArrayList<>();
     Arrays.stream((InteriorIndexCell[]) this.currentPage.getCells()).forEach(cell -> {
+      var row = formatIndexRow(cell);
+      if (matchesFilters(row)) {
+        rows.add(row);
+      }
       DatabaseProducer.get().navigateToPageOfElement(cell.getLeftChildPointer(), this);
-      this.get();
+      rows.addAll(this.get());
     });
     DatabaseProducer.get().navigateToPageOfElement(interiorPage.getRightmostPointer(), this);
-    this.get();
-    return this.rows;
+    rows.addAll(this.get());
+    return rows;
   }
 
-  private List<Row> iterateLeafPages() {
+  private List<Row> getFromLeafPages() {
     if (!(this.currentPage.getCells() instanceof LeafIndexCell[] leafCells)) {
       throw new IllegalStateException("Current page is not a leaf index page");
     }
@@ -78,20 +83,21 @@ public class Index implements SchemaElement {
     return Arrays
         .stream(leafCells)
         .map(this::formatIndexRow)
+        .filter(this::matchesFilters)
         .toList();
   }
 
-  private Row formatIndexRow(LeafIndexCell cell) {
+  private Row formatIndexRow(IndexCell cell) {
     var values = new HashMap<String, String>();
     for (int i = 0; i < cell.getRecordBody().values().length - 1; i++) {
       values.put(this.column, new String(cell.getRecordBody().values()[i]));
     }
     int rowId = ByteUtils.toInteger(cell.getRecordBody().values()[cell.getRecordBody().values().length - 1]).intValue();
-    var row = new Row(rowId, values);
-    if (row.values.get(this.column).contentEquals(this.searchValue)) {
-      System.out.println("Row: " + row);
-    }
-    return row;
+    return new Row(rowId, values);
+  }
+
+  private boolean matchesFilters(Row row) {
+    return row.values.get(this.column).contentEquals(this.searchValue);
   }
 
   public String getColumn() {

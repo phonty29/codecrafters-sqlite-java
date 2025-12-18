@@ -15,6 +15,7 @@ import struct.btree.BTreePageType;
 import struct.cells.InteriorTableCell;
 import struct.cells.LeafTableCell;
 import struct.db.DatabaseProducer;
+import struct.schema.Index.Row;
 import utils.ByteUtils;
 
 public class Table implements SchemaElement {
@@ -93,14 +94,6 @@ public class Table implements SchemaElement {
 
   public List<String> getByColumns(List<String> queriedColumns,
       Map<String, List<Function<String, Boolean>>> filters, String searchValue) {
-    boolean useIndex = Objects.nonNull(this.index)
-        && filters.keySet().stream().anyMatch(col -> this.index.getColumn().contentEquals(col));
-    if (useIndex) {
-      DatabaseProducer.get().navigateTo(index);
-      this.index.setSearchValue(searchValue);
-      this.index.get();
-    }
-
     List<String> orderedColumns = this.sqlProcessor.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;
@@ -111,12 +104,67 @@ public class Table implements SchemaElement {
       }
     }
 
+    boolean useIndex = Objects.nonNull(this.index)
+        && filters.keySet().stream().anyMatch(col -> this.index.getColumn().contentEquals(col));
+    if (useIndex) {
+      DatabaseProducer.get().navigateTo(index);
+      this.index.setSearchValue(searchValue);
+      return this.getByIndexes(columnOrders, this.index.get().stream().map(Row::rowId).toList());
+    }
+
     return switch (this.rootPage.getPageHeader().pageType()) {
       case LEAF_TABLE -> getByColumnsFromLeafTable(columnOrders, filters);
       case INT_TABLE -> getByColumnsFromInteriorTable(columnOrders, filters);
       default -> throw new IllegalStateException(
           "Not supported page type: " + this.currentPage.getPageHeader().pageType());
     };
+  }
+
+  public List<String> getByIndexes(int[] columns, List<Integer> rowIds) {
+    List<String> values = new ArrayList<>();
+    BTreePage rootPage = this.currentPage;
+    rowIds.forEach(rowId -> {
+      this.currentPage = rootPage;
+      values.add(this.getByIndex(columns, rowId));
+    });
+    return values;
+  }
+
+  public String getByIndex(int[] columns, Integer rowId) {
+    return switch (this.currentPage.getPageHeader().pageType()) {
+      case INT_TABLE -> getByIndexFromInteriorTable(columns, rowId);
+      case LEAF_TABLE -> getByIndexFromLeafTable(columns, rowId);
+      default -> throw new IllegalStateException(
+          "Not supported page type: " + this.currentPage.getPageHeader().pageType());
+    };
+  }
+
+  private String getByIndexFromInteriorTable(int[] columns, Integer rowId) {
+    if (!(currentPage.getCells() instanceof InteriorTableCell[] interiorTableCells)) {
+      throw new IllegalStateException("Current page is not an interior table");
+    }
+
+    for (var cell : interiorTableCells) {
+      if (rowId <= cell.getRowId()) {
+        DatabaseProducer.get().navigateToPageOfElement(cell.getLeftChildPointer(), this);
+        return this.getByIndex(columns, rowId);
+      }
+    }
+    DatabaseProducer.get().navigateToPageOfElement(this.rootPage.getRightmostPointer(), this);
+    return this.getByIndex(columns, rowId);
+  }
+
+  private String getByIndexFromLeafTable(int[] columns, Integer rowId) {
+    if (!(currentPage.getCells() instanceof LeafTableCell[] leafCells)) {
+      throw new IllegalStateException("Current page is not a leaf table");
+    }
+
+    for (var cell : leafCells) {
+      if (rowId == cell.getRowId()) {
+        return formatRowColumns(cell, columns);
+      }
+    }
+    throw new IllegalStateException("Current page doesn't contain row: " + rowId);
   }
 
   /**
