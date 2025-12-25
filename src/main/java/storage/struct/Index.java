@@ -1,4 +1,4 @@
-package storage.schema;
+package storage.struct;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,7 +16,7 @@ import storage.cells.LeafTableCell;
 import storage.db.DatabaseProducer;
 import utils.ByteUtils;
 
-public class Index implements SchemaElement {
+public class Index implements Structure {
 
   private final Meta meta;
   private final SqlProcessor sqlProcessor;

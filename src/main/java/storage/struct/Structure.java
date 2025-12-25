@@ -1,9 +1,9 @@
-package storage.schema;
+package storage.struct;
 
 import java.nio.ByteBuffer;
 import storage.btree.BTreePage;
 
-public interface SchemaElement {
+public interface Structure {
 
   default int getRootPage(byte[] rootPageBytes) {
     return switch (rootPageBytes.length) {

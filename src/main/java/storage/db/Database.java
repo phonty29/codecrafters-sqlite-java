@@ -8,10 +8,10 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import storage.btree.BTreePage;
-import storage.schema.Index;
-import storage.schema.SchemaElement;
-import storage.schema.SchemaType;
-import storage.schema.Table;
+import storage.struct.Index;
+import storage.struct.Structure;
+import storage.struct.Type;
+import storage.struct.Table;
 import storage.cells.LeafTableCell;
 
 public class Database {
@@ -54,9 +54,9 @@ public class Database {
     }
   }
 
-  private SchemaType schemaType(LeafTableCell cell) {
+  private Type schemaType(LeafTableCell cell) {
     String schemaType = new String(cell.getRecordBody().values()[0]);
-    return SchemaType.fromName(schemaType);
+    return Type.fromName(schemaType);
   }
 
   public int getNumberOfTables() {
@@ -86,23 +86,23 @@ public class Database {
         .orElseThrow(() -> new IllegalStateException("Required table not found: " + tableName));
   }
 
-  public void navigateTo(SchemaElement element) {
+  public void navigateTo(Structure structure) {
     try {
       ByteBuffer pageBuffer = ByteBuffer.allocate(this.pageSize);
-      this.channel.position((long) (element.getRootPageNumber() - 1) * this.pageSize)
+      this.channel.position((long) (structure.getRootPageNumber() - 1) * this.pageSize)
           .read(pageBuffer);
-      element.setRootPage(new BTreePage(pageBuffer.duplicate().clear()));
+      structure.setRootPage(new BTreePage(pageBuffer.duplicate().clear()));
     } catch (IOException e) {
       System.err.println(e.getMessage());
     }
   }
 
-  public void navigateToPageOfElement(int pageNumber, SchemaElement element) {
+  public void navigateToPageOfElement(int pageNumber, Structure structure) {
     try {
       ByteBuffer pageBuffer = ByteBuffer.allocate(this.pageSize);
       this.channel.position((long) (pageNumber - 1) * this.pageSize)
           .read(pageBuffer);
-      element.setCurrentPage(new BTreePage(pageBuffer.duplicate().clear()));
+      structure.setCurrentPage(new BTreePage(pageBuffer.duplicate().clear()));
     } catch (IOException e) {
       System.err.println(e.getMessage());
     }

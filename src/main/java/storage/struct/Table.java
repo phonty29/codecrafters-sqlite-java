@@ -1,4 +1,4 @@
-package storage.schema;
+package storage.struct;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,10 +15,10 @@ import storage.btree.BTreePageType;
 import storage.cells.InteriorTableCell;
 import storage.cells.LeafTableCell;
 import storage.db.DatabaseProducer;
-import storage.schema.Index.Row;
+import storage.struct.Index.Row;
 import utils.ByteUtils;
 
-public class Table implements SchemaElement {
+public class Table implements Structure {
 
   private final Meta meta;
   private final SqlProcessor sqlProcessor;
