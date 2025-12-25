@@ -2,7 +2,7 @@ package executors;
 
 import java.util.List;
 import query_processor.SqlProcessor;
-import struct.db.DatabaseProducer;
+import storage.db.DatabaseProducer;
 
 public class QueryExecutor implements Executor {
 

@@ -1,4 +1,4 @@
-package struct.btree;
+package storage.btree;
 
 public enum BTreePageType {
   INT_INDEX((byte) 2),

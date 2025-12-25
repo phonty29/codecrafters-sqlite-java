@@ -1,18 +1,16 @@
-package struct.cells;
+package storage.cells;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import utils.ByteUtils;
 
-public class InteriorIndexCell implements IndexCell {
-  private final int leftChildPointer;
+public class LeafIndexCell implements IndexCell {
   private final int payloadSize;
   private final RecordHeader recordHeader;
   private final RecordBody recordBody;
 
-  public InteriorIndexCell(ByteBuffer cellBuffer) {
-    this.leftChildPointer = cellBuffer.getInt();
+  public LeafIndexCell(ByteBuffer cellBuffer) {
     this.payloadSize = readVarInt(cellBuffer);
     // Payload
     // Payload Header
@@ -36,21 +34,18 @@ public class InteriorIndexCell implements IndexCell {
     this.recordBody = new RecordBody(values);
   }
 
-  public int getLeftChildPointer() {
-    return this.leftChildPointer;
-  }
-
   @Override
   public int getRowId() {
-    return ByteUtils
-        .toInteger(this.recordBody.values()[this.recordBody.values().length - 1])
+    return ByteUtils.toInteger(this.recordBody.values()[this.recordBody.values().length - 1])
         .intValue();
   }
 
+  @Override
   public RecordHeader getRecordHeader() {
     return this.recordHeader;
   }
 
+  @Override
   public RecordBody getRecordBody() {
     return this.recordBody;
   }

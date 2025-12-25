@@ -1,4 +1,4 @@
-package struct.schema;
+package storage.schema;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,12 +10,12 @@ import java.util.stream.Collectors;
 import query_processor.SqlProcessor;
 import query_processor.parser.ast.Column;
 import query_processor.parser.ast.ColumnType;
-import struct.btree.BTreePage;
-import struct.btree.BTreePageType;
-import struct.cells.InteriorTableCell;
-import struct.cells.LeafTableCell;
-import struct.db.DatabaseProducer;
-import struct.schema.Index.Row;
+import storage.btree.BTreePage;
+import storage.btree.BTreePageType;
+import storage.cells.InteriorTableCell;
+import storage.cells.LeafTableCell;
+import storage.db.DatabaseProducer;
+import storage.schema.Index.Row;
 import utils.ByteUtils;
 
 public class Table implements SchemaElement {

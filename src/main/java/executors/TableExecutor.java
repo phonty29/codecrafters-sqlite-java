@@ -1,6 +1,6 @@
 package executors;
 
-import struct.db.DatabaseProducer;
+import storage.db.DatabaseProducer;
 
 public class TableExecutor implements Executor {
 

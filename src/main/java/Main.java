@@ -1,5 +1,5 @@
 import executors.CommandDispatcher;
-import struct.db.DatabaseProducer;
+import storage.db.DatabaseProducer;
 
 public class Main {
 

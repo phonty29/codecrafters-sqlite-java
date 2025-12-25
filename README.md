@@ -39,7 +39,7 @@ Note: This section is for stages 2 and beyond.
 # Sample Databases
 
 To make it easy to test queries locally, we've added a sample database in the
-root of this repository: `sample.struct`.
+root of this repository: `sample.storage`.
 
 This contains two tables: `apples` & `oranges`. You can use this to test your
 implementation for the first 6 stages.
@@ -47,7 +47,7 @@ implementation for the first 6 stages.
 You can explore this database by running queries against it like this:
 
 ```sh
-$ sqlite3 sample.struct "select id, name from apples"
+$ sqlite3 sample.storage "select id, name from apples"
 1|Granny Smith
 2|Fuji
 3|Honeycrisp
@@ -56,11 +56,11 @@ $ sqlite3 sample.struct "select id, name from apples"
 
 There are two other databases that you can use:
 
-1. `superheroes.struct`:
+1. `superheroes.storage`:
    - This is a small version of the test database used in the table-scan stage.
    - It contains one table: `superheroes`.
    - It is ~1MB in size.
-1. `companies.struct`:
+1. `companies.storage`:
    - This is a small version of the test database used in the index-scan stage.
    - It contains one table: `companies`, and one index: `idx_companies_country`
    - It is ~7MB in size.

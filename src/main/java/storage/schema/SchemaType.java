@@ -1,4 +1,4 @@
-package struct.schema;
+package storage.schema;
 
 public enum SchemaType {
   TABLE("table"),

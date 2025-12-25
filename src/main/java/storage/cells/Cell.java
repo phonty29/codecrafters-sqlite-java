@@ -1,4 +1,4 @@
-package struct.cells;
+package storage.cells;
 
 import java.nio.ByteBuffer;
 

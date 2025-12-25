@@ -1,4 +1,4 @@
-package struct.db;
+package storage.db;
 
 import java.io.IOException;
 import java.nio.file.Path;

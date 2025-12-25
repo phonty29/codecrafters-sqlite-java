@@ -1,14 +1,14 @@
-package struct.btree;
+package storage.btree;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.OptionalInt;
-import struct.cells.Cell;
-import struct.cells.InteriorIndexCell;
-import struct.cells.InteriorTableCell;
-import struct.cells.LeafIndexCell;
-import struct.cells.LeafTableCell;
+import storage.cells.Cell;
+import storage.cells.InteriorIndexCell;
+import storage.cells.InteriorTableCell;
+import storage.cells.LeafIndexCell;
+import storage.cells.LeafTableCell;
 
 public class BTreePage {
 

@@ -1,7 +1,7 @@
-package struct.schema;
+package storage.schema;
 
 import java.nio.ByteBuffer;
-import struct.btree.BTreePage;
+import storage.btree.BTreePage;
 
 public interface SchemaElement {
 

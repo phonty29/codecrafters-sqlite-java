@@ -1,4 +1,4 @@
-package struct.schema;
+package storage.schema;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,13 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import query_processor.SqlProcessor;
-import struct.btree.BTreePage;
-import struct.btree.BTreePageType;
-import struct.cells.IndexCell;
-import struct.cells.InteriorIndexCell;
-import struct.cells.LeafIndexCell;
-import struct.cells.LeafTableCell;
-import struct.db.DatabaseProducer;
+import storage.btree.BTreePage;
+import storage.btree.BTreePageType;
+import storage.cells.IndexCell;
+import storage.cells.InteriorIndexCell;
+import storage.cells.LeafIndexCell;
+import storage.cells.LeafTableCell;
+import storage.db.DatabaseProducer;
 import utils.ByteUtils;
 
 public class Index implements SchemaElement {

@@ -1,6 +1,5 @@
-package struct.db;
+package storage.db;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -8,12 +7,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import struct.btree.BTreePage;
-import struct.schema.Index;
-import struct.schema.SchemaElement;
-import struct.schema.SchemaType;
-import struct.schema.Table;
-import struct.cells.LeafTableCell;
+import storage.btree.BTreePage;
+import storage.schema.Index;
+import storage.schema.SchemaElement;
+import storage.schema.SchemaType;
+import storage.schema.Table;
+import storage.cells.LeafTableCell;
 
 public class Database {
 

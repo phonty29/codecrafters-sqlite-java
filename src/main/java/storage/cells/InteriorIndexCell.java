@@ -1,19 +1,19 @@
-package struct.cells;
+package storage.cells;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import utils.ByteUtils;
 
-public class LeafTableCell implements Cell {
-
-  private final int recordSize;
-  private final int rowId;
+public class InteriorIndexCell implements IndexCell {
+  private final int leftChildPointer;
+  private final int payloadSize;
   private final RecordHeader recordHeader;
   private final RecordBody recordBody;
 
-  public LeafTableCell(ByteBuffer cellBuffer) {
-    this.recordSize = readVarInt(cellBuffer);
-    this.rowId = readVarInt(cellBuffer);
+  public InteriorIndexCell(ByteBuffer cellBuffer) {
+    this.leftChildPointer = cellBuffer.getInt();
+    this.payloadSize = readVarInt(cellBuffer);
     // Payload
     // Payload Header
     int payloadHeaderSize = readVarInt(cellBuffer);
@@ -36,9 +36,15 @@ public class LeafTableCell implements Cell {
     this.recordBody = new RecordBody(values);
   }
 
+  public int getLeftChildPointer() {
+    return this.leftChildPointer;
+  }
+
   @Override
   public int getRowId() {
-    return rowId;
+    return ByteUtils
+        .toInteger(this.recordBody.values()[this.recordBody.values().length - 1])
+        .intValue();
   }
 
   public RecordHeader getRecordHeader() {
@@ -47,18 +53,5 @@ public class LeafTableCell implements Cell {
 
   public RecordBody getRecordBody() {
     return this.recordBody;
-  }
-
-  public record RecordHeader(
-      int payloadHeaderSize,
-      List<Integer> serialTypes
-  ) {
-
-  }
-
-  public record RecordBody(
-      byte[][] values
-  ) {
-
   }
 }
