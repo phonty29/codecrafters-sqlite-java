@@ -1,18 +1,22 @@
 package struct.db;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Objects;
 
 public class DatabaseProducer {
 
   private static Database database;
 
-  public static void init(FileInputStream databaseFile) throws IOException {
+  public static void init(String databaseFilePath) {
     if (Objects.nonNull(database)) {
       throw new IllegalStateException("Database already initialized");
     }
-    database = new Database(databaseFile);
+    try {
+      database = new Database(Path.of(databaseFilePath));
+    } catch (IOException x) {
+      System.err.println(x.getMessage());
+    }
   }
 
   public static Database get() {

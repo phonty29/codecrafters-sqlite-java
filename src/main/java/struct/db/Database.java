@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import struct.btree.BTreePage;
@@ -21,8 +23,8 @@ public class Database {
   private final List<Index> indexes = new ArrayList<>();
   private final BTreePage bTreePage;
 
-  protected Database(FileInputStream databaseFile) throws IOException {
-    this.channel = databaseFile.getChannel();
+  protected Database(Path path) throws IOException {
+    this.channel = FileChannel.open(path, StandardOpenOption.READ);
     // Read meta from database file headers (first 100 bytes)
     // Skip Magic numbers
     this.channel.position(16);
