@@ -26,8 +26,8 @@ public record BinaryOp(String op, Expression left, Expression right) implements 
     if (Objects.isNull(rowValue) || Objects.isNull(condValue)) {
       return false;
     }
-    if (val.value() instanceof String) {
-      return condValue.equals(String.valueOf(rowValue));
+    if (condValue instanceof String) {
+      return ((String) condValue).equalsIgnoreCase(String.valueOf(rowValue));
     }
     if (condValue instanceof Number && rowValue instanceof Number) {
       return ((Number) condValue).doubleValue() == ((Number) rowValue).doubleValue();

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import query_processor.Row;
 import query_processor.query.lexer.SqlLexer;
 import query_processor.query.lexer.Token;
 import query_processor.query.parser.SqlParser;
@@ -11,6 +12,7 @@ import query_processor.query.parser.ast.BinaryOp;
 import query_processor.query.parser.ast.Column;
 import query_processor.query.parser.ast.CreateIndexStmt;
 import query_processor.query.parser.ast.CreateTableStmt;
+import query_processor.query.parser.ast.Expression;
 import query_processor.query.parser.ast.FunctionCall;
 import query_processor.query.parser.ast.Identifier;
 import query_processor.query.parser.ast.Literal;
@@ -113,23 +115,11 @@ public class QueryEngine {
     }
   }
 
-  public Map<String, List<Function<String, Boolean>>> filters() {
+  public Expression where() {
     if (this.queryTree instanceof SelectStmt && Objects.nonNull(select().where())) {
-      var where = (BinaryOp) select().where();
-      if (where.left() instanceof Identifier && where.right() instanceof Literal) {
-        Function<String, Boolean> filter = (val) -> {
-          if (where.op().contentEquals("=")) {
-            var literal = (Literal) where.right();
-            return literal.value().equals(val.toLowerCase());
-          }
-          throw new IllegalArgumentException("Unknown filter: " + val);
-        };
-
-        String filterKey = ((Identifier) where.left()).name();
-        return Map.of(filterKey, List.of(filter));
-      }
+      return select().where();
     }
-    return Map.of();
+    return (_) -> true;
   }
 
   public String getSearchedValue() {
