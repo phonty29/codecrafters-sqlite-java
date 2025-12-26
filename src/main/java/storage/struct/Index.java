@@ -1,29 +1,15 @@
 package storage.struct;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import query_processor.query.QueryEngine;
 import storage.btree.BTreePage;
 import storage.btree.BTreePageType;
-import storage.cells.IndexCell;
-import storage.cells.InteriorIndexCell;
-import storage.cells.LeafIndexCell;
 import storage.cells.LeafTableCell;
-import storage.db.DatabaseProducer;
-import utils.ByteUtils;
 
 public class Index implements Structure {
 
   private final Meta meta;
-  private final QueryEngine queryEngine;
-  private final String column;
   private BTreePage currentPage;
   private BTreePage rootPage;
-  private String searchValue;
 
   public Index(LeafTableCell cell) {
     // Get meta from sqlite_schema cells
@@ -37,71 +23,6 @@ public class Index implements Structure {
     int rootPageNumber = getRootPage(cellValues[rootPageOrder]);
     String sqlStmt = new String(cellValues[createStmtOrder]);
     this.meta = new Meta(indexName, tableName, rootPageNumber, sqlStmt);
-
-    // Process `create index` query
-    this.queryEngine = new QueryEngine(sqlStmt);
-    this.column = this.queryEngine.getIndexedColumns().getFirst();
-  }
-
-  public void setSearchValue(String searchValue) {
-    this.searchValue = searchValue;
-  }
-
-  public List<Row> get() {
-    return switch (this.currentPage.getPageHeader().pageType()) {
-      case INT_INDEX -> getFromInteriorPages();
-      case LEAF_INDEX -> getFromLeafPages();
-      default -> throw new IllegalStateException("Unexpected page type for index: " + this.rootPage.getPageHeader().pageType());
-    };
-  }
-
-  private List<Row> getFromInteriorPages() {
-    if (!(this.currentPage.getCells() instanceof InteriorIndexCell[])) {
-      throw new IllegalStateException("Current page is not an interior index page");
-    }
-
-    BTreePage parentPage = this.currentPage;
-    List<Row> rows = new ArrayList<>();
-    Arrays.stream((InteriorIndexCell[]) this.currentPage.getCells()).forEach(cell -> {
-      var row = formatIndexRow(cell);
-      if (matchesFilters(row)) {
-        rows.add(row);
-      }
-      DatabaseProducer.get().navigateToPageOfElement(cell.getLeftChildPointer(), this);
-      rows.addAll(this.get());
-    });
-    DatabaseProducer.get().navigateToPageOfElement(parentPage.getRightmostPointer(), this);
-    rows.addAll(this.get());
-    return rows;
-  }
-
-  private List<Row> getFromLeafPages() {
-    if (!(this.currentPage.getCells() instanceof LeafIndexCell[] leafCells)) {
-      throw new IllegalStateException("Current page is not a leaf index page");
-    }
-
-    return Arrays
-        .stream(leafCells)
-        .map(this::formatIndexRow)
-        .filter(this::matchesFilters)
-        .toList();
-  }
-
-  private Row formatIndexRow(IndexCell cell) {
-    var values = new HashMap<String, String>();
-    for (int i = 0; i < cell.getRecordBody().values().length - 1; i++) {
-      values.put(this.column, new String(cell.getRecordBody().values()[i]));
-    }
-    int rowId = ByteUtils.toInteger(cell.getRecordBody().values()[cell.getRecordBody().values().length - 1]).intValue();
-    return new Row(rowId, values);
-  }
-
-  private boolean matchesFilters(Row row) {
-    return row.values.get(this.column).contentEquals(this.searchValue);
-  }
-
-  public String getColumn() {
-    return this.column;
   }
 
   @Override
@@ -120,6 +41,16 @@ public class Index implements Structure {
     } else {
       throw new IllegalArgumentException("Cannot change root page");
     }
+  }
+
+  @Override
+  public BTreePage getCurrentPage() {
+    return this.currentPage;
+  }
+
+  @Override
+  public BTreePage getRootPage() {
+    return this.rootPage;
   }
 
   private void validatePage(BTreePage page) {
@@ -143,13 +74,6 @@ public class Index implements Structure {
       String tableName,
       int rootPageNumber,
       String createStmt
-  ) {
-
-  }
-
-  public record Row(
-      int rowId,
-      Map<String, String> values
   ) {
 
   }

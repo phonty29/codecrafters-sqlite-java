@@ -2,17 +2,20 @@ package storage.struct;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import query_processor.Row;
-import query_processor.query.QueryEngine;
-import query_processor.query.parser.ast.Column;
-import query_processor.query.parser.ast.ColumnType;
-import query_processor.query.parser.ast.Expression;
+import processing.Row;
+import processing.planner.QueryPlanner;
+import processing.planner.ScanType;
+import processing.query.QueryEngine;
+import processing.query.parser.ast.Column;
+import processing.query.parser.ast.ColumnType;
+import processing.query.parser.ast.Expression;
+import processing.query.parser.ast.SelectStmt;
+import processing.scanners.IndexScanner;
 import storage.btree.BTreePage;
 import storage.btree.BTreePageType;
 import storage.cells.InteriorTableCell;
@@ -27,7 +30,6 @@ public class Table implements Structure {
   private final Column[] columns;
   private BTreePage rootPage;
   private BTreePage currentPage;
-  private Index index;
 
   public Table(LeafTableCell schema) {
     // Get meta from sqlite_schema cells
@@ -43,17 +45,6 @@ public class Table implements Structure {
     // Init table structure
     this.queryEngine = new QueryEngine(this.meta.sqlStmt);
     this.columns = queryEngine.getColumns();
-  }
-
-  public void setIndex(Index index) {
-    validateIndex(index);
-    this.index = index;
-  }
-
-  private void validateIndex(Index index) {
-    if (Objects.isNull(index) || !index.meta().tableName().contentEquals(this.meta.name)) {
-      throw new IllegalArgumentException("Invalid index for this table: " + index.meta().name());
-    }
   }
 
   @Override
@@ -72,6 +63,16 @@ public class Table implements Structure {
     } else {
       throw new IllegalArgumentException("Cannot change root page");
     }
+  }
+
+  @Override
+  public BTreePage getCurrentPage() {
+    return this.currentPage;
+  }
+
+  @Override
+  public BTreePage getRootPage() {
+    return this.rootPage;
   }
 
   @Override
@@ -94,7 +95,7 @@ public class Table implements Structure {
     throw new IllegalStateException("Root page is not a leaf table");
   }
 
-  public List<String> getByColumns(List<String> queriedColumns, Expression where, String searchValue) {
+  public List<String> getByColumns(List<String> queriedColumns, SelectStmt select, Expression where) {
     List<String> orderedColumns = this.queryEngine.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;
@@ -105,11 +106,11 @@ public class Table implements Structure {
       }
     }
 
-    boolean useIndex = Objects.nonNull(this.index);
-    if (useIndex) {
-      DatabaseProducer.get().navigateTo(index);
-      this.index.setSearchValue(searchValue);
-      return this.getByIndexes(columnOrders, this.index.get().stream().map(Index.Row::rowId).toList());
+    var planner = new QueryPlanner(select);
+    if (planner.scanType().equals(ScanType.INDEX_SCAN)) {
+      List<Integer> rowIds = planner.indexScanners().stream().map(IndexScanner::scan)
+          .flatMap(List::stream).toList();
+      return this.scanWithIndex(columnOrders, rowIds);
     }
 
     return switch (this.rootPage.getPageHeader().pageType()) {
@@ -120,30 +121,26 @@ public class Table implements Structure {
     };
   }
 
-  public List<String> getByIndexes(int[] columns, List<Integer> rowIds) {
-    List<Integer> sortedRows = rowIds
-        .stream()
-        .sorted()
-        .toList();
+  public List<String> scanWithIndex(int[] columns, List<Integer> rowIds) {
     List<String> values = new ArrayList<>();
     BTreePage rootPage = this.currentPage;
-    sortedRows.forEach(rowId -> {
+    rowIds.forEach(rowId -> {
       this.currentPage = rootPage;
-      values.add(this.getByIndex(columns, rowId));
+      values.add(this.getByRowId(columns, rowId));
     });
     return values;
   }
 
-  public String getByIndex(int[] columns, Integer rowId) {
+  public String getByRowId(int[] columns, Integer rowId) {
     return switch (this.currentPage.getPageHeader().pageType()) {
-      case INT_TABLE -> getByIndexFromInteriorTable(columns, rowId);
-      case LEAF_TABLE -> getByIndexFromLeafTable(columns, rowId);
+      case INT_TABLE -> getByRowIdFromInteriorTable(columns, rowId);
+      case LEAF_TABLE -> getByRowIdFromLeafTable(columns, rowId);
       default -> throw new IllegalStateException(
           "Not supported page type: " + this.currentPage.getPageHeader().pageType());
     };
   }
 
-  private String getByIndexFromInteriorTable(int[] columns, Integer rowId) {
+  private String getByRowIdFromInteriorTable(int[] columns, Integer rowId) {
     if (!(currentPage.getCells() instanceof InteriorTableCell[] interiorTableCells)) {
       throw new IllegalStateException("Current page is not an interior table");
     }
@@ -152,14 +149,14 @@ public class Table implements Structure {
     for (var cell : interiorTableCells) {
       if (rowId <= cell.getRowId()) {
         DatabaseProducer.get().navigateToPageOfElement(cell.getLeftChildPointer(), this);
-        return this.getByIndex(columns, rowId);
+        return this.getByRowId(columns, rowId);
       }
     }
     DatabaseProducer.get().navigateToPageOfElement(parentPage.getRightmostPointer(), this);
-    return this.getByIndex(columns, rowId);
+    return this.getByRowId(columns, rowId);
   }
 
-  private String getByIndexFromLeafTable(int[] columns, Integer rowId) {
+  private String getByRowIdFromLeafTable(int[] columns, Integer rowId) {
     if (!(currentPage.getCells() instanceof LeafTableCell[] leafCells)) {
       throw new IllegalStateException("Current page is not a leaf table");
     }

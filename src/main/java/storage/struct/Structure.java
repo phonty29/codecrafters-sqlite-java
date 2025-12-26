@@ -21,5 +21,9 @@ public interface Structure {
 
   void setRootPage(BTreePage rootPage);
 
+  BTreePage getCurrentPage();
+
+  BTreePage getRootPage();
+
   int getRootPageNumber();
 }

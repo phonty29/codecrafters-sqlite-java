@@ -1,7 +1,8 @@
 package executors;
 
 import java.util.List;
-import query_processor.query.QueryEngine;
+import processing.planner.QueryPlanner;
+import processing.query.QueryEngine;
 import storage.db.DatabaseProducer;
 
 public class QueryExecutor implements Executor {
@@ -29,7 +30,7 @@ public class QueryExecutor implements Executor {
     if (queryProcessor.isColumnsRetrieval()) {
       List<String> queriedColumns = this.queryProcessor.getColumnNames();
       table
-          .getByColumns(queriedColumns, this.queryProcessor.where(), this.queryProcessor.getSearchedValue())
+          .getByColumns(queriedColumns, this.queryProcessor.select(), this.queryProcessor.where())
           .forEach(System.out::println);
     }
   }
