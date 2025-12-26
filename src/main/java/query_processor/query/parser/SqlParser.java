@@ -1,28 +1,28 @@
-package query_processor.parser;
+package query_processor.query.parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import query_processor.lexer.Token;
-import query_processor.lexer.TokenType;
-import query_processor.parser.ast.BinaryOp;
-import query_processor.parser.ast.Column;
-import query_processor.parser.ast.ColumnType;
-import query_processor.parser.ast.Constraint;
-import query_processor.parser.ast.CreateIndexStmt;
-import query_processor.parser.ast.CreateTableStmt;
-import query_processor.parser.ast.Expression;
-import query_processor.parser.ast.FromItem;
-import query_processor.parser.ast.FunctionCall;
-import query_processor.parser.ast.Identifier;
-import query_processor.parser.ast.Literal;
-import query_processor.parser.ast.OrderItem;
-import query_processor.parser.ast.SelectItem;
-import query_processor.parser.ast.SelectStmt;
-import query_processor.parser.ast.SubqueryRef;
-import query_processor.parser.ast.TableRef;
-import query_processor.parser.ast.UnaryOp;
+import query_processor.query.lexer.Token;
+import query_processor.query.lexer.TokenType;
+import query_processor.query.parser.ast.BinaryOp;
+import query_processor.query.parser.ast.Column;
+import query_processor.query.parser.ast.ColumnType;
+import query_processor.query.parser.ast.Constraint;
+import query_processor.query.parser.ast.CreateIndexStmt;
+import query_processor.query.parser.ast.CreateTableStmt;
+import query_processor.query.parser.ast.Expression;
+import query_processor.query.parser.ast.FromItem;
+import query_processor.query.parser.ast.FunctionCall;
+import query_processor.query.parser.ast.Identifier;
+import query_processor.query.parser.ast.Literal;
+import query_processor.query.parser.ast.OrderItem;
+import query_processor.query.parser.ast.SelectItem;
+import query_processor.query.parser.ast.SelectStmt;
+import query_processor.query.parser.ast.SubqueryRef;
+import query_processor.query.parser.ast.TableRef;
+import query_processor.query.parser.ast.UnaryOp;
 
 public class SqlParser {
 

@@ -7,9 +7,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import query_processor.SqlProcessor;
-import query_processor.parser.ast.Column;
-import query_processor.parser.ast.ColumnType;
+import query_processor.query.QueryEngine;
+import query_processor.query.parser.ast.Column;
+import query_processor.query.parser.ast.ColumnType;
 import storage.btree.BTreePage;
 import storage.btree.BTreePageType;
 import storage.cells.InteriorTableCell;
@@ -21,7 +21,7 @@ import utils.ByteUtils;
 public class Table implements Structure {
 
   private final Meta meta;
-  private final SqlProcessor sqlProcessor;
+  private final QueryEngine queryEngine;
   private final Column[] columns;
   private BTreePage rootPage;
   private BTreePage currentPage;
@@ -39,8 +39,8 @@ public class Table implements Structure {
     this.meta = new Meta(tableName, rootPageNumber, sqlStmt);
 
     // Init table structure
-    this.sqlProcessor = new SqlProcessor(this.meta.sqlStmt);
-    this.columns = sqlProcessor.getColumns();
+    this.queryEngine = new QueryEngine(this.meta.sqlStmt);
+    this.columns = queryEngine.getColumns();
   }
 
   public void setIndex(Index index) {
@@ -94,7 +94,7 @@ public class Table implements Structure {
 
   public List<String> getByColumns(List<String> queriedColumns,
       Map<String, List<Function<String, Boolean>>> filters, String searchValue) {
-    List<String> orderedColumns = this.sqlProcessor.getColumnNames();
+    List<String> orderedColumns = this.queryEngine.getColumnNames();
     int[] columnOrders = new int[queriedColumns.size()];
     int colIdx = 0;
     for (String queriedColumn : queriedColumns) {

@@ -1,4 +1,4 @@
-import executors.CommandDispatcher;
+import executors.ExecutionEngine;
 import storage.db.DatabaseProducer;
 
 public class Main {
@@ -15,6 +15,6 @@ public class Main {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     System.err.println("Logs from your program will appear here!");
     DatabaseProducer.init(databaseFilePath);
-    new CommandDispatcher(command).execute();
+    new ExecutionEngine(command).execute();
   }
 }

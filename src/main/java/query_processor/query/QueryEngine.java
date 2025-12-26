@@ -1,54 +1,67 @@
-package query_processor;
+package query_processor.query;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-import query_processor.lexer.SqlLexer;
-import query_processor.lexer.Token;
-import query_processor.parser.SqlParser;
-import query_processor.parser.ast.BinaryOp;
-import query_processor.parser.ast.Column;
-import query_processor.parser.ast.CreateIndexStmt;
-import query_processor.parser.ast.CreateTableStmt;
-import query_processor.parser.ast.FunctionCall;
-import query_processor.parser.ast.Identifier;
-import query_processor.parser.ast.Literal;
-import query_processor.parser.ast.SelectItem;
-import query_processor.parser.ast.SelectStmt;
-import query_processor.parser.ast.Statement;
-import query_processor.parser.ast.TableRef;
+import query_processor.query.lexer.SqlLexer;
+import query_processor.query.lexer.Token;
+import query_processor.query.parser.SqlParser;
+import query_processor.query.parser.ast.BinaryOp;
+import query_processor.query.parser.ast.Column;
+import query_processor.query.parser.ast.CreateIndexStmt;
+import query_processor.query.parser.ast.CreateTableStmt;
+import query_processor.query.parser.ast.FunctionCall;
+import query_processor.query.parser.ast.Identifier;
+import query_processor.query.parser.ast.Literal;
+import query_processor.query.parser.ast.SelectItem;
+import query_processor.query.parser.ast.SelectStmt;
+import query_processor.query.parser.ast.Statement;
+import query_processor.query.parser.ast.TableRef;
 
-public class SqlProcessor {
-
+public class QueryEngine {
   private final Statement queryTree;
+  private final StmtType stmtType;
 
-  public SqlProcessor(String query) {
-    query = query
-        .replaceAll("\"", "")
-        .toLowerCase()
-        .trim();
+  public QueryEngine(String query) {
+    query = prepareQuery(query);
     SqlLexer lexer = new SqlLexer(query);
     List<Token> tokens = lexer.tokenize();
     SqlParser parser = new SqlParser(tokens);
     this.queryTree = switch (query) {
-      case String q when q.toLowerCase().startsWith("select") -> parser.parseSelect();
-      case String q when q.toLowerCase().startsWith("create table") -> parser.parseCreateTable();
-      case String q when q.toLowerCase().startsWith("create index") -> parser.parseCreateIndex();
+      case String q when q.toLowerCase().startsWith("select") -> {
+        this.stmtType = StmtType.SELECT;
+        yield parser.parseSelect();
+      }
+      case String q when q.toLowerCase().startsWith("create table") -> {
+        this.stmtType = StmtType.CREATE_TABLE;
+        yield parser.parseCreateTable();
+      }
+      case String q when q.toLowerCase().startsWith("create index") -> {
+        this.stmtType = StmtType.CREATE_INDEX;
+        yield parser.parseCreateIndex();
+      }
       default -> throw new IllegalArgumentException("Unknown query: " + query);
     };
   }
 
+  private String prepareQuery(String query) {
+    return query
+        .replaceAll("\"", "")
+        .toLowerCase()
+        .trim();
+  }
+
   private SelectStmt select() {
-    if (this.queryTree instanceof SelectStmt) {
+    if (this.stmtType.equals(StmtType.SELECT) && this.queryTree instanceof SelectStmt) {
       return (SelectStmt) this.queryTree;
     }
     throw new IllegalStateException(
         "Unknown query type: " + this.queryTree.getClass().getSimpleName());
   }
 
-  private CreateTableStmt create() {
-    if (this.queryTree instanceof CreateTableStmt) {
+  private CreateTableStmt createTable() {
+    if (this.stmtType.equals(StmtType.CREATE_TABLE) && this.queryTree instanceof CreateTableStmt) {
       return (CreateTableStmt) this.queryTree;
     }
     throw new IllegalStateException(
@@ -56,7 +69,7 @@ public class SqlProcessor {
   }
 
   private CreateIndexStmt createIndex() {
-    if (this.queryTree instanceof CreateIndexStmt) {
+    if (this.stmtType.equals(StmtType.CREATE_INDEX) && this.queryTree instanceof CreateIndexStmt) {
       return (CreateIndexStmt) this.queryTree;
     }
     throw new IllegalStateException(
@@ -89,7 +102,7 @@ public class SqlProcessor {
           .map(i -> ((Identifier) i.expr()).name())
           .toList();
     } else if (this.queryTree instanceof CreateTableStmt) {
-      return create()
+      return createTable()
           .columns()
           .stream()
           .map(Column::name)
@@ -134,7 +147,7 @@ public class SqlProcessor {
 
   public Column[] getColumns() {
     if (this.queryTree instanceof CreateTableStmt) {
-      return create()
+      return createTable()
           .columns()
           .toArray(Column[]::new);
     } else {

@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import query_processor.SqlProcessor;
+import query_processor.query.QueryEngine;
 import storage.btree.BTreePage;
 import storage.btree.BTreePageType;
 import storage.cells.IndexCell;
@@ -19,7 +19,7 @@ import utils.ByteUtils;
 public class Index implements Structure {
 
   private final Meta meta;
-  private final SqlProcessor sqlProcessor;
+  private final QueryEngine queryEngine;
   private final String column;
   private BTreePage currentPage;
   private BTreePage rootPage;
@@ -39,8 +39,8 @@ public class Index implements Structure {
     this.meta = new Meta(indexName, tableName, rootPageNumber, sqlStmt);
 
     // Process `create index` query
-    this.sqlProcessor = new SqlProcessor(sqlStmt);
-    this.column = this.sqlProcessor.getIndexedColumns().getFirst();
+    this.queryEngine = new QueryEngine(sqlStmt);
+    this.column = this.queryEngine.getIndexedColumns().getFirst();
   }
 
   public void setSearchValue(String searchValue) {

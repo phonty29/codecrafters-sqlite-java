@@ -1,9 +1,9 @@
 package executors;
 
-public class CommandDispatcher implements Executor {
+public class ExecutionEngine implements Executor {
   private final String command;
 
-  public CommandDispatcher(String command) {
+  public ExecutionEngine(String command) {
     this.command = command;
   }
 

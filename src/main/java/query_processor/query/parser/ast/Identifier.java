@@ -1,0 +1,11 @@
+package query_processor.query.parser.ast;
+
+import query_processor.Row;
+
+public record Identifier(String name) implements Expression {
+
+  @Override
+  public boolean eval(Row row) {
+    throw new UnsupportedOperationException("Unimplemented method 'eval'");
+  }
+}

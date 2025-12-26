@@ -1,4 +1,4 @@
-package query_processor.lexer;
+package query_processor.query.lexer;
 
 public final class Token {
 

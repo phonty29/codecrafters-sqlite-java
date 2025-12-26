@@ -1,15 +1,15 @@
 package executors;
 
 import java.util.List;
-import query_processor.SqlProcessor;
+import query_processor.query.QueryEngine;
 import storage.db.DatabaseProducer;
 
 public class QueryExecutor implements Executor {
 
-  private final SqlProcessor queryProcessor;
+  private final QueryEngine queryProcessor;
 
   public QueryExecutor(String query) {
-    this.queryProcessor = new SqlProcessor(query);
+    this.queryProcessor = new QueryEngine(query);
   }
 
   @Override

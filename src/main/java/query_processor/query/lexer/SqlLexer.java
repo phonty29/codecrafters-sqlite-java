@@ -1,4 +1,4 @@
-package query_processor.lexer;
+package query_processor.query.lexer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
