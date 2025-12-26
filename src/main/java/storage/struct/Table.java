@@ -158,6 +158,8 @@ public class Table implements Structure {
       throw new IllegalStateException("Current page is not a leaf table");
     }
 
+    System.err.println("current page first cell rowId: " + leafCells[0].getRowId());
+    System.err.println("current page last cell rowId: " + leafCells[leafCells.length - 1].getRowId());
     for (var cell : leafCells) {
       if (rowId == cell.getRowId()) {
         return formatRowColumns(cell, columns);
