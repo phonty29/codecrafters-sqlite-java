@@ -36,7 +36,7 @@ public class LeafIndexCell implements IndexCell {
 
   @Override
   public int getRowId() {
-    return ByteUtils.toInteger(this.recordBody.values()[this.recordBody.values().length - 1])
+    return ByteUtils.toNumber(this.recordBody.values()[this.recordBody.values().length - 1])
         .intValue();
   }
 

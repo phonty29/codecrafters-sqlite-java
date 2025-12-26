@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import processing.Row;
 import processing.query.QueryEngine;
 import processing.query.parser.ast.BinaryOp;
 import processing.query.parser.ast.SelectStmt;
@@ -14,6 +17,7 @@ import storage.db.DatabaseProducer;
 public class QueryPlanner {
   private ScanType scanType = ScanType.TABLE_SCAN;
   private final List<IndexScanner> indexScanners = new ArrayList<>();
+  private Function<Row, Boolean> filter = (_) -> true;
 
   public QueryPlanner(SelectStmt select) {
     Map<String, Object> keyValues;
@@ -27,9 +31,18 @@ public class QueryPlanner {
       String column = new QueryEngine(idx.meta().createStmt()).createIndex().column();
       if (keyValues.containsKey(column)) {
         this.scanType = ScanType.INDEX_SCAN;
-        this.indexScanners.add(new IndexScanner(idx, column, keyValues.get(column).toString()));
+        this.indexScanners.add(new IndexScanner(idx, keyValues.get(column).toString()));
       }
     });
+
+    if (Objects.nonNull(select.where()) && select.where() instanceof BinaryOp
+        && this.scanType.equals(ScanType.TABLE_SCAN)) {
+      this.filter = (r) -> select.where().eval(r);
+    }
+  }
+
+  public Function<Row, Boolean> filter() {
+    return this.filter;
   }
 
   public ScanType scanType() {

@@ -1,29 +1,26 @@
 package utils;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 public class ByteUtils {
 
-  public static Number toInteger(byte[] bytes) {
-    return switch (bytes.length) {
-      case 0 -> 0;
-      case 1 -> ByteBuffer.wrap(bytes).get();
-      case 2 -> ByteBuffer.wrap(bytes).getShort();
-      case 3 -> ((bytes[0] & 0xFF) << 16) |
-          ((bytes[1] & 0xFF) << 8) |
-          (bytes[2] & 0xFF);
-      case 4 -> ByteBuffer.wrap(bytes).getInt();
-      case 8 -> ByteBuffer.wrap(bytes).getLong();
-      default -> throw new IllegalStateException("Unexpected value: " + bytes.length);
-    };
-  }
+  public static Number toNumber(byte[] bytes) {
+    if (bytes.length == 0)
+      return 0;
 
-  public static Number toReal(byte[] bytes) {
-    return switch (bytes.length) {
-      case 0 -> 0;
-      case 4 -> ByteBuffer.wrap(bytes).getFloat();
-      case 8 -> ByteBuffer.wrap(bytes).getDouble();
-      default -> throw new IllegalStateException("Unexpected value: " + bytes.length);
-    };
+    if (bytes.length <= 8) {
+      long result = 0;
+      for (byte b : bytes) {
+        result = (result << 8) | (b & 0xFF);
+      }
+      return result;
+    }
+
+    if (bytes.length <= 12) {
+      return new BigInteger(1, bytes); // 1 = unsigned
+    }
+
+    throw new IllegalArgumentException("Too many bytes: " + bytes.length);
   }
 }

@@ -29,8 +29,7 @@ public class QueryExecutor implements Executor {
     // select [columnName, ...] from [tableName];
     if (queryProcessor.isColumnsRetrieval()) {
       List<String> queriedColumns = this.queryProcessor.getColumnNames();
-      table
-          .getByColumns(queriedColumns, this.queryProcessor.select(), this.queryProcessor.where())
+      table.scan(queriedColumns, new QueryPlanner(this.queryProcessor.select()))
           .forEach(System.out::println);
     }
   }

@@ -2,9 +2,7 @@ package processing.scanners;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import storage.btree.BTreePage;
 import storage.cells.IndexCell;
@@ -16,12 +14,10 @@ import utils.ByteUtils;
 
 public class IndexScanner {
   private final Index index;
-  private final String column;
   private final String value;
 
-  public IndexScanner(Index index, String column, String value) {
+  public IndexScanner(Index index, String value) {
     this.index = index;
-    this.column = column;
     this.value = value;
   }
 
@@ -57,7 +53,7 @@ public class IndexScanner {
 
   private Row convertToRow(IndexCell cell) {
     String value = new String(cell.getRecordBody().values()[0]);
-    int rowId = ByteUtils.toInteger(cell.getRecordBody().values()[1]).intValue();
+    int rowId = ByteUtils.toNumber(cell.getRecordBody().values()[1]).intValue();
     return new Row(rowId, value);
   }
 
