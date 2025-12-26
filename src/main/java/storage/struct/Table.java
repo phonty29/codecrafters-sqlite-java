@@ -2,6 +2,7 @@ package storage.struct;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,9 +121,13 @@ public class Table implements Structure {
   }
 
   public List<String> getByIndexes(int[] columns, List<Integer> rowIds) {
+    List<Integer> sortedRows = rowIds
+        .stream()
+        .sorted()
+        .toList();
     List<String> values = new ArrayList<>();
     BTreePage rootPage = this.currentPage;
-    rowIds.forEach(rowId -> {
+    sortedRows.forEach(rowId -> {
       this.currentPage = rootPage;
       values.add(this.getByIndex(columns, rowId));
     });
@@ -143,13 +148,14 @@ public class Table implements Structure {
       throw new IllegalStateException("Current page is not an interior table");
     }
 
+    BTreePage parentPage = this.currentPage;
     for (var cell : interiorTableCells) {
       if (rowId <= cell.getRowId()) {
         DatabaseProducer.get().navigateToPageOfElement(cell.getLeftChildPointer(), this);
         return this.getByIndex(columns, rowId);
       }
     }
-    DatabaseProducer.get().navigateToPageOfElement(this.rootPage.getRightmostPointer(), this);
+    DatabaseProducer.get().navigateToPageOfElement(parentPage.getRightmostPointer(), this);
     return this.getByIndex(columns, rowId);
   }
 
@@ -158,8 +164,6 @@ public class Table implements Structure {
       throw new IllegalStateException("Current page is not a leaf table");
     }
 
-    System.err.println("current page first cell rowId: " + leafCells[0].getRowId());
-    System.err.println("current page last cell rowId: " + leafCells[leafCells.length - 1].getRowId());
     for (var cell : leafCells) {
       if (rowId == cell.getRowId()) {
         return formatRowColumns(cell, columns);

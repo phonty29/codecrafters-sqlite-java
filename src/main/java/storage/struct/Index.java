@@ -60,7 +60,7 @@ public class Index implements Structure {
       throw new IllegalStateException("Current page is not an interior index page");
     }
 
-    BTreePage interiorPage = this.currentPage;
+    BTreePage parentPage = this.currentPage;
     List<Row> rows = new ArrayList<>();
     Arrays.stream((InteriorIndexCell[]) this.currentPage.getCells()).forEach(cell -> {
       var row = formatIndexRow(cell);
@@ -70,7 +70,7 @@ public class Index implements Structure {
       DatabaseProducer.get().navigateToPageOfElement(cell.getLeftChildPointer(), this);
       rows.addAll(this.get());
     });
-    DatabaseProducer.get().navigateToPageOfElement(interiorPage.getRightmostPointer(), this);
+    DatabaseProducer.get().navigateToPageOfElement(parentPage.getRightmostPointer(), this);
     rows.addAll(this.get());
     return rows;
   }
