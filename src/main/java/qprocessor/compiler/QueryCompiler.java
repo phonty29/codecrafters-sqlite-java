@@ -15,7 +15,6 @@ import qprocessor.compiler.parser.ast.Statement;
 public class QueryCompiler {
 
   private final Statement queryTree;
-  private final StmtType stmtType;
 
   public QueryCompiler(String query) {
     query = prepareQuery(query);
@@ -23,18 +22,9 @@ public class QueryCompiler {
     List<Token> tokens = lexer.tokenize();
     SqlParser parser = new SqlParser(tokens);
     this.queryTree = switch (query) {
-      case String q when q.toLowerCase().startsWith("select") -> {
-        this.stmtType = StmtType.SELECT;
-        yield parser.parseSelect();
-      }
-      case String q when q.toLowerCase().startsWith("create table") -> {
-        this.stmtType = StmtType.CREATE_TABLE;
-        yield parser.parseCreateTable();
-      }
-      case String q when q.toLowerCase().startsWith("create index") -> {
-        this.stmtType = StmtType.CREATE_INDEX;
-        yield parser.parseCreateIndex();
-      }
+      case String q when q.toLowerCase().startsWith("select") -> parser.parseSelect();
+      case String q when q.toLowerCase().startsWith("create table") -> parser.parseCreateTable();
+      case String q when q.toLowerCase().startsWith("create index") -> parser.parseCreateIndex();
       default -> throw new IllegalArgumentException("Unknown compiler: " + query);
     };
   }
@@ -47,7 +37,7 @@ public class QueryCompiler {
   }
 
   public SelectStmt select() {
-    if (this.stmtType.equals(StmtType.SELECT) && this.queryTree instanceof SelectStmt) {
+    if (this.queryTree instanceof SelectStmt) {
       return (SelectStmt) this.queryTree;
     }
     throw new IllegalStateException(
@@ -55,7 +45,7 @@ public class QueryCompiler {
   }
 
   public CreateTableStmt createTable() {
-    if (this.stmtType.equals(StmtType.CREATE_TABLE) && this.queryTree instanceof CreateTableStmt) {
+    if (this.queryTree instanceof CreateTableStmt) {
       return (CreateTableStmt) this.queryTree;
     }
     throw new IllegalStateException(
@@ -63,7 +53,7 @@ public class QueryCompiler {
   }
 
   public CreateIndexStmt createIndex() {
-    if (this.stmtType.equals(StmtType.CREATE_INDEX) && this.queryTree instanceof CreateIndexStmt) {
+    if (this.queryTree instanceof CreateIndexStmt) {
       return (CreateIndexStmt) this.queryTree;
     }
     throw new IllegalStateException(
@@ -75,16 +65,5 @@ public class QueryCompiler {
     return items.size() == 1 &&
         items.getFirst().expr() instanceof FunctionCall &&
         ((FunctionCall) items.getFirst().expr()).name().equals("count");
-  }
-
-  public Column[] getColumns() {
-    if (this.queryTree instanceof CreateTableStmt) {
-      return createTable()
-          .columns()
-          .toArray(Column[]::new);
-    } else {
-      throw new IllegalStateException(
-          "Unknown compiler type: " + this.queryTree.getClass().getSimpleName());
-    }
   }
 }
