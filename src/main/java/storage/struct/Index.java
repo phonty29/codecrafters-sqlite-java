@@ -1,6 +1,7 @@
 package storage.struct;
 
 import java.util.Objects;
+import qprocessor.scanners.IndexScanner;
 import storage.btree.BTreePage;
 import storage.btree.BTreePageType;
 import storage.cells.LeafTableCell;
@@ -23,6 +24,10 @@ public class Index implements Structure {
     int rootPageNumber = getRootPage(cellValues[rootPageOrder]);
     String sqlStmt = new String(cellValues[createStmtOrder]);
     this.meta = new Meta(indexName, tableName, rootPageNumber, sqlStmt);
+  }
+
+  public IndexScanner scanner(String value) {
+    return new IndexScanner(this, value);
   }
 
   @Override

@@ -1,35 +1,51 @@
 package executors;
 
 import java.util.List;
-import processing.planner.QueryPlanner;
-import processing.query.QueryEngine;
+import qprocessor.compiler.parser.ast.SelectItem;
+import qprocessor.planner.QueryPlanner;
+import qprocessor.compiler.QueryCompiler;
+import qprocessor.compiler.parser.ast.Identifier;
+import qprocessor.compiler.parser.ast.TableRef;
 import storage.db.DatabaseProducer;
 
 public class QueryExecutor implements Executor {
 
-  private final QueryEngine queryProcessor;
+  private final QueryCompiler compiler;
 
   public QueryExecutor(String query) {
-    this.queryProcessor = new QueryEngine(query);
+    this.compiler = new QueryCompiler(query);
   }
 
   @Override
   public void execute() {
     var database = DatabaseProducer.get();
 
-    String tableName = queryProcessor.tableName();
+    String tableName = ((TableRef) compiler.select().from()).name();
     var table = database.getTable(tableName);
     database.navigateTo(table);
 
     // select count(*) from table;
-    if (this.queryProcessor.isCount()) {
+    if (this.compiler.isCount()) {
       System.out.println(table.getCellsCount());
+      return;
     }
 
     // select [columnName, ...] from [tableName];
-    if (queryProcessor.isColumnsRetrieval()) {
-      List<String> queriedColumns = this.queryProcessor.getColumnNames();
-      table.scan(queriedColumns, new QueryPlanner(this.queryProcessor.select()))
+    List<SelectItem> sItems = compiler.select().list();
+    if (
+        !sItems.isEmpty()
+            && sItems.stream().allMatch(it -> it.expr() instanceof Identifier)
+    ) {
+      List<String> queriedColumns = this.compiler
+          .select()
+          .list()
+          .stream()
+          .map(i -> ((Identifier) i.expr()).name())
+          .toList();
+
+      table
+          .scanner()
+          .scan(queriedColumns, new QueryPlanner(this.compiler.select()))
           .forEach(System.out::println);
     }
   }
