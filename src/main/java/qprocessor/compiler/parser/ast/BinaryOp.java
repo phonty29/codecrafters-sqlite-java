@@ -51,7 +51,8 @@ public record BinaryOp(String op, Expression left, Expression right) implements 
     if (condValue instanceof Number && rowValue instanceof Number) {
       return ((Number) condValue).doubleValue() == ((Number) rowValue).doubleValue();
     }
-    throw new IllegalArgumentException(rowValue + " and " + condValue + " are not comparible objects");
+    throw new IllegalArgumentException(
+        rowValue + " and " + condValue + " are not comparible objects");
   }
 
   private boolean evalNotEq(Row row) {

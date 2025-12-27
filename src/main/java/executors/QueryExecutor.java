@@ -1,11 +1,11 @@
 package executors;
 
 import java.util.List;
-import qprocessor.compiler.parser.ast.SelectItem;
-import qprocessor.planner.QueryPlanner;
 import qprocessor.compiler.QueryCompiler;
 import qprocessor.compiler.parser.ast.Identifier;
+import qprocessor.compiler.parser.ast.SelectItem;
 import qprocessor.compiler.parser.ast.TableRef;
+import qprocessor.planner.QueryPlanner;
 import storage.db.DatabaseProducer;
 
 public class QueryExecutor implements Executor {

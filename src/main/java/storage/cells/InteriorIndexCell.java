@@ -6,6 +6,7 @@ import java.util.List;
 import utils.ByteUtils;
 
 public class InteriorIndexCell implements IndexCell {
+
   private final int leftChildPointer;
   private final int payloadSize;
   private final RecordHeader recordHeader;

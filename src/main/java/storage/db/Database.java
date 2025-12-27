@@ -8,11 +8,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import storage.btree.BTreePage;
+import storage.cells.LeafTableCell;
 import storage.struct.Index;
 import storage.struct.Structure;
-import storage.struct.Type;
 import storage.struct.Table;
-import storage.cells.LeafTableCell;
+import storage.struct.Type;
 
 public class Database {
 

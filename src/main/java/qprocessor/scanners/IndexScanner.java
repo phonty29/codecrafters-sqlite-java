@@ -13,6 +13,7 @@ import storage.struct.Index;
 import utils.ByteUtils;
 
 public class IndexScanner {
+
   private final Index index;
   private final String value;
 
@@ -28,7 +29,8 @@ public class IndexScanner {
     return switch (index.getCurrentPage().getPageHeader().pageType()) {
       case INT_INDEX -> scanInterior();
       case LEAF_INDEX -> scanLeaf();
-      default -> throw new IllegalStateException("Unexpected page type for index: " + index.getRootPage().getPageHeader().pageType());
+      default -> throw new IllegalStateException(
+          "Unexpected page type for index: " + index.getRootPage().getPageHeader().pageType());
     };
   }
 

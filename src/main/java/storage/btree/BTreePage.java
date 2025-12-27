@@ -29,7 +29,8 @@ public class BTreePage {
     // Skip 1 byte
     pageBuffer.position(pageBuffer.position() + 1);
     // Right-most pointer
-    if (bTreePageType.equals(BTreePageType.INT_TABLE) || bTreePageType.equals(BTreePageType.INT_INDEX)) {
+    if (bTreePageType.equals(BTreePageType.INT_TABLE) || bTreePageType.equals(
+        BTreePageType.INT_INDEX)) {
       this.rightmostPointer = OptionalInt.of(pageBuffer.getInt());
     }
     // Start reading the cell pointers array
@@ -70,10 +71,10 @@ public class BTreePage {
     return switch (this.pageHeader.pageType) {
       case LEAF_TABLE ->
           Arrays.stream(this.cells).map(cell -> (LeafTableCell) cell).toArray(LeafTableCell[]::new);
-      case INT_TABLE ->
-          Arrays.stream(this.cells).map(cell -> (InteriorTableCell) cell).toArray(InteriorTableCell[]::new);
-      case INT_INDEX ->
-          Arrays.stream(this.cells).map(cell -> (InteriorIndexCell) cell).toArray(InteriorIndexCell[]::new);
+      case INT_TABLE -> Arrays.stream(this.cells).map(cell -> (InteriorTableCell) cell)
+          .toArray(InteriorTableCell[]::new);
+      case INT_INDEX -> Arrays.stream(this.cells).map(cell -> (InteriorIndexCell) cell)
+          .toArray(InteriorIndexCell[]::new);
       case LEAF_INDEX ->
           Arrays.stream(this.cells).map(cell -> (LeafIndexCell) cell).toArray(LeafIndexCell[]::new);
     };

@@ -14,13 +14,15 @@ import qprocessor.scanners.IndexScanner;
 import storage.db.DatabaseProducer;
 
 public class QueryPlanner {
-  private ScanType scanType = ScanType.TABLE_SCAN;
+
   private final List<IndexScanner> indexScanners = new ArrayList<>();
+  private ScanType scanType = ScanType.TABLE_SCAN;
   private Function<Row, Boolean> filter = (_) -> true;
 
   public QueryPlanner(SelectStmt select) {
     Map<String, Object> keyValues;
-    if (Objects.nonNull(select) && Objects.nonNull(select.where()) && select.where() instanceof BinaryOp) {
+    if (Objects.nonNull(select) && Objects.nonNull(select.where())
+        && select.where() instanceof BinaryOp) {
       keyValues = ((BinaryOp) select.where()).keyValues();
     } else {
       keyValues = new HashMap<>();

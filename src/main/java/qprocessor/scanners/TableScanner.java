@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import qprocessor.planner.QueryPlanner;
-import qprocessor.compiler.QueryCompiler;
 import qprocessor.Row;
+import qprocessor.compiler.QueryCompiler;
 import qprocessor.compiler.parser.ast.Column;
 import qprocessor.compiler.parser.ast.ColumnType;
+import qprocessor.planner.QueryPlanner;
 import storage.btree.BTreePage;
 import storage.cells.InteriorTableCell;
 import storage.cells.LeafTableCell;
@@ -20,6 +20,7 @@ import storage.struct.Table;
 import utils.ByteUtils;
 
 public class TableScanner {
+
   private final Table table;
   private final List<Column> columns;
 
@@ -98,7 +99,8 @@ public class TableScanner {
       DatabaseProducer.get().navigateToPageOfElement(cell.getLeftChildPointer(), table);
       values.addAll(this.scanLeaf(columns, filter));
     });
-    DatabaseProducer.get().navigateToPageOfElement(table.getRootPage().getRightmostPointer(), table);
+    DatabaseProducer.get()
+        .navigateToPageOfElement(table.getRootPage().getRightmostPointer(), table);
     values.addAll(this.scanLeaf(columns, filter));
     return values;
   }

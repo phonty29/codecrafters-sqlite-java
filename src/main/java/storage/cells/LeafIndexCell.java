@@ -6,6 +6,7 @@ import java.util.List;
 import utils.ByteUtils;
 
 public class LeafIndexCell implements IndexCell {
+
   private final int payloadSize;
   private final RecordHeader recordHeader;
   private final RecordBody recordBody;

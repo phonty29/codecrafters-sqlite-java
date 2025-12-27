@@ -17,13 +17,13 @@ public interface Structure {
     };
   }
 
-  void setCurrentPage(BTreePage currentPage);
-
-  void setRootPage(BTreePage rootPage);
-
   BTreePage getCurrentPage();
 
+  void setCurrentPage(BTreePage currentPage);
+
   BTreePage getRootPage();
+
+  void setRootPage(BTreePage rootPage);
 
   int getRootPageNumber();
 }

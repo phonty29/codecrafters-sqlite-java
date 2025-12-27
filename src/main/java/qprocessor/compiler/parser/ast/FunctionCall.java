@@ -7,5 +7,6 @@ public record FunctionCall(String name, List<Expression> args) implements Expres
 
   @Override
   public boolean eval(Row row) {
-    throw new UnsupportedOperationException("Unimplemented method 'eval'");  }
+    throw new UnsupportedOperationException("Unimplemented method 'eval'");
+  }
 }

@@ -3,6 +3,7 @@ package qprocessor;
 import java.util.Map;
 
 public class Row {
+
   private final Map<String, Object> row;
 
   public Row(Map<String, Object> row) {

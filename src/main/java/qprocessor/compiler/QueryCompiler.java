@@ -13,6 +13,7 @@ import qprocessor.compiler.parser.ast.SelectStmt;
 import qprocessor.compiler.parser.ast.Statement;
 
 public class QueryCompiler {
+
   private final Statement queryTree;
   private final StmtType stmtType;
 

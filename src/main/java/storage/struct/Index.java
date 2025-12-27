@@ -31,9 +31,19 @@ public class Index implements Structure {
   }
 
   @Override
+  public BTreePage getCurrentPage() {
+    return this.currentPage;
+  }
+
+  @Override
   public void setCurrentPage(BTreePage currentPage) {
     validatePage(currentPage);
     this.currentPage = currentPage;
+  }
+
+  @Override
+  public BTreePage getRootPage() {
+    return this.rootPage;
   }
 
   @Override
@@ -46,16 +56,6 @@ public class Index implements Structure {
     } else {
       throw new IllegalArgumentException("Cannot change root page");
     }
-  }
-
-  @Override
-  public BTreePage getCurrentPage() {
-    return this.currentPage;
-  }
-
-  @Override
-  public BTreePage getRootPage() {
-    return this.rootPage;
   }
 
   private void validatePage(BTreePage page) {
